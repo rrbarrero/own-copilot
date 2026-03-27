@@ -25,7 +25,6 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.documents (
     uuid uuid NOT NULL,
-    content text NOT NULL,
     source_type character varying(20) NOT NULL,
     source_id character varying(255) NOT NULL,
     path text NOT NULL,
@@ -36,7 +35,17 @@ CREATE TABLE public.documents (
     repository_url text,
     branch character varying(100),
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    processing_status character varying(20) NOT NULL,
+    size_bytes bigint NOT NULL,
+    upload_batch_id uuid,
+    repository_sync_id uuid,
+    content_hash character varying(64),
+    mime_type character varying(100),
+    indexed_at timestamp with time zone,
+    last_error text,
+    version integer DEFAULT 1,
+    superseded_by uuid
 );
 
 
@@ -77,4 +86,5 @@ ALTER TABLE ONLY public.schema_migrations
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20260327105700');
+    ('20260327105700'),
+    ('20260327121038');

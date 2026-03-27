@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class StorageRepoProto(Protocol):
+    def save(self, path: str, content: str) -> None: ...
+    def get(self, path: str) -> str | None: ...

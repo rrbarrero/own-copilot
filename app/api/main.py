@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 
 from app.factory import create_llm
+from app.ingestion.infra.endpoints import router as ingestion_router
 
 app = FastAPI(title="Own Copilot API")
+
+app.include_router(ingestion_router)
 
 
 @app.get("/")

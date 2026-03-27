@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     # Server Configuration
     PORT: int = 8000
     HOST: str = "0.0.0.0"
+    DATABASE_URL: str = (
+        "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+    )
+    STORAGE_PATH: str = "/app/storage"
 
     model_config = SettingsConfigDict(env_file=".env")
 
