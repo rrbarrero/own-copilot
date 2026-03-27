@@ -17,3 +17,8 @@ class InMemoryDocumentRepo(DocumentRepoProto):
             return self._documents.get(doc_uuid)
         except ValueError:
             return None
+
+    async def get_by_batch_id(self, batch_id: UUID) -> list[Document]:
+        return [
+            doc for doc in self._documents.values() if doc.upload_batch_id == batch_id
+        ]

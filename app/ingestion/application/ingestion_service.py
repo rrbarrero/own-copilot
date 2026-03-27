@@ -73,3 +73,6 @@ class IngestionService:
         await self.job_repo.save(job)
 
         return doc_uuid
+
+    async def get_batch_documents(self, batch_id: uuid.UUID) -> list[Document]:
+        return await self.doc_repo.get_by_batch_id(batch_id)

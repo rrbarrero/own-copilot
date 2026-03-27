@@ -1,7 +1,7 @@
-import uuid
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 
 from app.factory import create_ingestion_service
 from app.ingestion.application.ingestion_service import IngestionService
@@ -17,14 +17,25 @@ async def upload_files(
         list[UploadFile], File(description="Upload up to 10 files (max 1MB each)")
     ],
     service: Annotated[IngestionService, Depends(create_ingestion_service)],
+    x_idempotency_key: Annotated[UUID, Header(alias="X-Idempotency-Key")],
 ) -> list[DocumentResponseDTO]:
+    # Check idempotency
+    existing_docs = await service.get_batch_documents(x_idempotency_key)
+    if existing_docs:
+        return [
+            DocumentResponseDTO(
+                uuid=doc.uuid, filename=doc.filename, status="already_processed"
+            )
+            for doc in existing_docs
+        ]
+
     try:
         FileValidator.validate_count(len(files))
     except FileValidationError as e:
         raise HTTPException(status_code=400, detail=e.message) from e
 
     responses = []
-    batch_id = uuid.uuid4()
+    batch_id = x_idempotency_key
 
     for file in files:
         if not file.filename:
