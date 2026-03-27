@@ -1,5 +1,7 @@
 import uuid
+
 import pytest
+
 from app.ingestion.application.ingestion_service import IngestionService
 from app.ingestion.domain.document import ProcessingStatus, SourceType
 from app.ingestion.domain.job import JobStatus
@@ -31,9 +33,7 @@ def ingestion_service(doc_repo, storage_repo, job_repo):
 
 
 @pytest.mark.asyncio
-async def test_upload_file_success(
-    ingestion_service, doc_repo, storage_repo, job_repo
-):
+async def test_upload_file_success(ingestion_service, doc_repo, storage_repo, job_repo):
     # Given
     filename = "test_document.txt"
     content = b"Hello world, this is a test document content."
