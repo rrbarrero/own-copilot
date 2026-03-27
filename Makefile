@@ -1,15 +1,15 @@
 .PHONY: test test-all dev check
 
 test:
-	uv run pytest
+	docker compose run --rm app pytest
 
 test-all:
-	uv run pytest -m ""
+	docker compose run --rm app pytest -m ""
 
 dev:
 	uv run uvicorn app.api.main:app --reload
 
 check:
-	uv run ruff check .
-	uv run ruff format --check .
-	uv run pyrefly check .
+	docker compose run --rm app ruff check .
+	docker compose run --rm app ruff format --check .
+	docker compose run --rm app pyrefly check .

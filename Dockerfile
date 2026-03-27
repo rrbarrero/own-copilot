@@ -1,5 +1,5 @@
-# Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.13-alpine AS builder
+# Use a Debian-based Python image with uv pre-installed (better wheel support)
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -10,18 +10,18 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy project files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies without installing the project itself
-RUN uv sync --frozen --no-install-project --no-dev
+# Install ALL dependencies (including dev)
+RUN uv sync --frozen --no-install-project
 
 # Copy the rest of the application
 COPY . .
 
 # Install the project
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen
 
 
-# Final image
-FROM python:3.13-alpine
+# Final image (we use uv for the final image to have access to dev tools)
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim
 
 WORKDIR /app
 
