@@ -13,13 +13,14 @@ router = APIRouter(prefix="/ingestion", tags=["ingestion"])
 
 @router.post("/upload", response_model=list[DocumentResponseDTO])
 async def upload_files(
-    files: Annotated[
-        list[UploadFile], File(description="Upload up to 10 files (max 1MB each)")
-    ],
-    service: Annotated[IngestionService, Depends(create_ingestion_service)],
-    x_idempotency_key: Annotated[UUID, Header(alias="X-Idempotency-Key")],
+    files: list[UploadFile] = File(...),  # noqa: B008
+    x_idempotency_key: Annotated[UUID, Header(alias="X-Idempotency-Key")] = None,  # type: ignore
+    service: Annotated[IngestionService, Depends(create_ingestion_service)] = None,  # type: ignore
 ) -> list[DocumentResponseDTO]:
     # Check idempotency
+    if not x_idempotency_key:
+        raise HTTPException(status_code=422, detail="X-Idempotency-Key is required")
+
     existing_docs = await service.get_batch_documents(x_idempotency_key)
     if existing_docs:
         return [

@@ -12,3 +12,7 @@ class JobRepoProto(Protocol):
     async def get_by_id(self, job_id: UUID) -> Job | None:
         """Retrieves a job by its unique identifier."""
         ...
+
+    async def claim_next_job(self, queue_name: str, locked_by: str) -> Job | None:
+        """Claims the next pending job using SKIP LOCKED."""
+        ...

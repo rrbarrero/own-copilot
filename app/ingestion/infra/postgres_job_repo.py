@@ -97,3 +97,62 @@ class PostgresJobRepo(JobRepoProto):
                 started_at=res.get("started_at"),
                 finished_at=res.get("finished_at"),
             )
+
+    async def claim_next_job(self, queue_name: str, locked_by: str) -> Job | None:
+        query = """
+        UPDATE ingestion_jobs
+        SET status = %s,
+            locked_at = NOW(),
+            locked_by = %s,
+            updated_at = NOW(),
+            attempts = attempts + 1
+        WHERE id = (
+            SELECT id
+            FROM ingestion_jobs
+            WHERE queue_name = %s
+              AND status = %s
+              AND run_at <= NOW()
+              AND attempts < max_attempts
+            ORDER BY priority DESC, created_at ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT 1
+        )
+        RETURNING *;
+        """
+        async with self._pool.connection() as conn, conn.cursor() as cur:
+            conn.row_factory = cast(Any, dict_row)
+            await cur.execute(
+                query,
+                (
+                    JobStatus.PROCESSING.value,
+                    locked_by,
+                    queue_name,
+                    JobStatus.PENDING.value,
+                ),
+            )
+            row = await cur.fetchone()
+            if not row:
+                return None
+
+            res = cast(dict[str, Any], row)
+            return Job(
+                id=UUID(str(res["id"])),
+                queue_name=str(res["queue_name"]),
+                job_type=str(res["job_type"]),
+                payload=res["payload"],
+                status=JobStatus(str(res["status"])),
+                attempts=int(res["attempts"]),
+                max_attempts=int(res["max_attempts"]),
+                run_at=res["run_at"],
+                created_at=res["created_at"],
+                updated_at=res["updated_at"],
+                priority=int(res["priority"]),
+                correlation_id=UUID(str(res["correlation_id"]))
+                if res.get("correlation_id")
+                else None,
+                locked_at=res.get("locked_at"),
+                locked_by=res.get("locked_by"),
+                last_error=res.get("last_error"),
+                started_at=res.get("started_at"),
+                finished_at=res.get("finished_at"),
+            )
