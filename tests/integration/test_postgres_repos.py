@@ -19,9 +19,9 @@ from app.ingestion.infra.postgres_job_repo import PostgresJobRepo
 @pytest.fixture
 def db_url():
     return os.environ.get(
-        "DATABASE_URL", 
-        "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
+        "DATABASE_URL", "postgres://postgres:postgres@db:5432/postgres?sslmode=disable"
     )
+
 
 @pytest.mark.asyncio
 async def test_postgres_document_repo(db_url):
@@ -47,7 +47,7 @@ async def test_postgres_document_repo(db_url):
             size_bytes=1024,
             created_at=now,
             updated_at=now,
-            upload_batch_id=batch_id
+            upload_batch_id=batch_id,
         )
         await repo.save(doc)
 
@@ -81,7 +81,7 @@ async def test_postgres_document_repo(db_url):
         ]
 
         await repo.save_chunks(str(doc_id), chunks)
-        
+
         # Run twice to test idempotency (should not duplicate)
         await repo.save_chunks(str(doc_id), chunks)
 
@@ -92,7 +92,9 @@ async def test_postgres_document_repo(db_url):
                 (str(doc_id),),
             )
             row = await cur.fetchone()
+            assert row is not None
             assert row[0] == 2
+
 
 @pytest.mark.asyncio
 async def test_postgres_job_repo(db_url):
@@ -115,7 +117,7 @@ async def test_postgres_job_repo(db_url):
             run_at=now,
             created_at=now,
             updated_at=now,
-            priority=0
+            priority=0,
         )
         await repo.save(job)
 

@@ -20,7 +20,7 @@ async def clear_database():
         "DATABASE_URL",
         "postgres://postgres:postgres@db:5432/postgres?sslmode=disable",
     )
-    
+
     # Run the truncation using a completely independent connection
     # so we do not mess with the existing global pool.
     conn = await psycopg.AsyncConnection.connect(db_url)
