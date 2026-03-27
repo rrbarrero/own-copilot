@@ -1,5 +1,4 @@
 import json
-from typing import Any, cast
 from uuid import UUID
 
 from psycopg.rows import dict_row
@@ -63,8 +62,10 @@ class PostgresJobRepo(JobRepoProto):
             )
 
     async def get_by_id(self, job_id: UUID) -> Job | None:
-        async with self._pool.connection() as conn, conn.cursor() as cur:
-            conn.row_factory = cast(Any, dict_row)
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
             await cur.execute(
                 "SELECT * FROM ingestion_jobs WHERE id = %s", (str(job_id),)
             )
@@ -72,30 +73,28 @@ class PostgresJobRepo(JobRepoProto):
             if not row:
                 return None
 
-            res = cast(dict[str, Any], row)
-
             return Job(
-                id=UUID(str(res["id"])),
-                queue_name=str(res["queue_name"]),
-                job_type=str(res["job_type"]),
-                payload=res["payload"]
-                if isinstance(res["payload"], dict)
-                else json.loads(res["payload"]),
-                status=JobStatus(str(res["status"])),
-                attempts=int(res["attempts"]),
-                max_attempts=int(res["max_attempts"]),
-                run_at=res["run_at"],
-                created_at=res["created_at"],
-                updated_at=res["updated_at"],
-                priority=int(res["priority"]),
-                correlation_id=UUID(str(res["correlation_id"]))
-                if res.get("correlation_id")
+                id=UUID(str(row["id"])),
+                queue_name=str(row["queue_name"]),
+                job_type=str(row["job_type"]),
+                payload=row["payload"]
+                if isinstance(row["payload"], dict)
+                else json.loads(row["payload"]),
+                status=JobStatus(str(row["status"])),
+                attempts=int(row["attempts"]),
+                max_attempts=int(row["max_attempts"]),
+                run_at=row["run_at"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
+                priority=int(row["priority"]),
+                correlation_id=UUID(str(row["correlation_id"]))
+                if row.get("correlation_id")
                 else None,
-                locked_at=res.get("locked_at"),
-                locked_by=res.get("locked_by"),
-                last_error=res.get("last_error"),
-                started_at=res.get("started_at"),
-                finished_at=res.get("finished_at"),
+                locked_at=row.get("locked_at"),
+                locked_by=row.get("locked_by"),
+                last_error=row.get("last_error"),
+                started_at=row.get("started_at"),
+                finished_at=row.get("finished_at"),
             )
 
     async def claim_next_job(self, queue_name: str, locked_by: str) -> Job | None:
@@ -119,8 +118,10 @@ class PostgresJobRepo(JobRepoProto):
         )
         RETURNING *;
         """
-        async with self._pool.connection() as conn, conn.cursor() as cur:
-            conn.row_factory = cast(Any, dict_row)
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
             await cur.execute(
                 query,
                 (
@@ -134,25 +135,24 @@ class PostgresJobRepo(JobRepoProto):
             if not row:
                 return None
 
-            res = cast(dict[str, Any], row)
             return Job(
-                id=UUID(str(res["id"])),
-                queue_name=str(res["queue_name"]),
-                job_type=str(res["job_type"]),
-                payload=res["payload"],
-                status=JobStatus(str(res["status"])),
-                attempts=int(res["attempts"]),
-                max_attempts=int(res["max_attempts"]),
-                run_at=res["run_at"],
-                created_at=res["created_at"],
-                updated_at=res["updated_at"],
-                priority=int(res["priority"]),
-                correlation_id=UUID(str(res["correlation_id"]))
-                if res.get("correlation_id")
+                id=UUID(str(row["id"])),
+                queue_name=str(row["queue_name"]),
+                job_type=str(row["job_type"]),
+                payload=row["payload"],
+                status=JobStatus(str(row["status"])),
+                attempts=int(row["attempts"]),
+                max_attempts=int(row["max_attempts"]),
+                run_at=row["run_at"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
+                priority=int(row["priority"]),
+                correlation_id=UUID(str(row["correlation_id"]))
+                if row.get("correlation_id")
                 else None,
-                locked_at=res.get("locked_at"),
-                locked_by=res.get("locked_by"),
-                last_error=res.get("last_error"),
-                started_at=res.get("started_at"),
-                finished_at=res.get("finished_at"),
+                locked_at=row.get("locked_at"),
+                locked_by=row.get("locked_by"),
+                last_error=row.get("last_error"),
+                started_at=row.get("started_at"),
+                finished_at=row.get("finished_at"),
             )

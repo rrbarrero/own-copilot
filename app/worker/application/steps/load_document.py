@@ -14,10 +14,10 @@ class LoadDocumentStep(StepProto):
         self.storage_repo = storage_repo
 
     async def run(self, ctx: PipelineContext):
-        # 1. Get document_id from payload
-        doc_id = ctx.payload.get("document_id")
+        # 1. Get document_id from context
+        doc_id = ctx.document_id
         if not doc_id:
-            raise ValueError("document_id is required in context payload")
+            raise ValueError("document_id is required in context")
 
         # 2. Get document metadata from repository
         doc = await self.document_repo.get_by_uuid(doc_id)

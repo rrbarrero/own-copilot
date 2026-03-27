@@ -1,4 +1,4 @@
-from typing import Any, cast
+import json
 from uuid import UUID
 
 from psycopg.rows import dict_row
@@ -97,8 +97,10 @@ class PostgresDocumentRepo(DocumentRepoProto):
         except ValueError:
             return None
 
-        async with self._pool.connection() as conn, conn.cursor() as cur:
-            conn.row_factory = cast(Any, dict_row)
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
             await cur.execute(
                 "SELECT * FROM documents WHERE uuid = %s", (str(doc_uuid),)
             )
@@ -106,78 +108,79 @@ class PostgresDocumentRepo(DocumentRepoProto):
             if not row:
                 return None
 
-            res = cast(dict[str, Any], row)
-
             return Document(
-                uuid=UUID(str(res["uuid"])),
-                source_type=SourceType(str(res["source_type"])),
-                source_id=str(res["source_id"]),
-                path=str(res["path"]),
-                filename=str(res["filename"]),
-                extension=str(res["extension"]),
-                doc_type=DocumentType(str(res["doc_type"])),
-                processing_status=ProcessingStatus(str(res["processing_status"])),
-                size_bytes=int(res["size_bytes"]),
-                created_at=res["created_at"],
-                updated_at=res["updated_at"],
-                language=res.get("language"),
-                upload_batch_id=UUID(str(res["upload_batch_id"]))
-                if res.get("upload_batch_id")
+                uuid=UUID(str(row["uuid"])),
+                source_type=SourceType(str(row["source_type"])),
+                source_id=str(row["source_id"]),
+                path=str(row["path"]),
+                filename=str(row["filename"]),
+                extension=str(row["extension"]),
+                doc_type=DocumentType(str(row["doc_type"])),
+                processing_status=ProcessingStatus(str(row["processing_status"])),
+                size_bytes=int(row["size_bytes"]),
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
+                language=row.get("language"),
+                upload_batch_id=UUID(str(row["upload_batch_id"]))
+                if row.get("upload_batch_id")
                 else None,
-                repository_sync_id=UUID(str(res["repository_sync_id"]))
-                if res.get("repository_sync_id")
+                repository_sync_id=UUID(str(row["repository_sync_id"]))
+                if row.get("repository_sync_id")
                 else None,
-                repository_url=res.get("repository_url"),
-                content_hash=res.get("content_hash"),
-                branch=res.get("branch"),
-                mime_type=res.get("mime_type"),
-                indexed_at=res.get("indexed_at"),
-                last_error=res.get("last_error"),
-                version=int(res.get("version", 1)),
-                superseded_by=UUID(str(res["superseded_by"]))
-                if res.get("superseded_by")
+                repository_url=row.get("repository_url"),
+                content_hash=row.get("content_hash"),
+                branch=row.get("branch"),
+                mime_type=row.get("mime_type"),
+                indexed_at=row.get("indexed_at"),
+                last_error=row.get("last_error"),
+                version=int(row.get("version", 1)),
+                superseded_by=UUID(str(row["superseded_by"]))
+                if row.get("superseded_by")
                 else None,
             )
 
     async def get_by_batch_id(self, batch_id: UUID) -> list[Document]:
-        async with self._pool.connection() as conn, conn.cursor() as cur:
-            conn.row_factory = cast(Any, dict_row)
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
             await cur.execute(
-                "SELECT * FROM documents WHERE upload_batch_id = %s", (str(batch_id),)
+                "SELECT * FROM documents WHERE upload_batch_id = %s",
+                (str(batch_id),),
             )
             rows = await cur.fetchall()
             return [
                 Document(
-                    uuid=UUID(str(res["uuid"])),
-                    source_type=SourceType(str(res["source_type"])),
-                    source_id=str(res["source_id"]),
-                    path=str(res["path"]),
-                    filename=str(res["filename"]),
-                    extension=str(res["extension"]),
-                    doc_type=DocumentType(str(res["doc_type"])),
-                    processing_status=ProcessingStatus(str(res["processing_status"])),
-                    size_bytes=int(res["size_bytes"]),
-                    created_at=res["created_at"],
-                    updated_at=res["updated_at"],
-                    language=res.get("language"),
-                    upload_batch_id=UUID(str(res["upload_batch_id"]))
-                    if res.get("upload_batch_id")
+                    uuid=UUID(str(row["uuid"])),
+                    source_type=SourceType(str(row["source_type"])),
+                    source_id=str(row["source_id"]),
+                    path=str(row["path"]),
+                    filename=str(row["filename"]),
+                    extension=str(row["extension"]),
+                    doc_type=DocumentType(str(row["doc_type"])),
+                    processing_status=ProcessingStatus(str(row["processing_status"])),
+                    size_bytes=int(row["size_bytes"]),
+                    created_at=row["created_at"],
+                    updated_at=row["updated_at"],
+                    language=row.get("language"),
+                    upload_batch_id=UUID(str(row["upload_batch_id"]))
+                    if row.get("upload_batch_id")
                     else None,
-                    repository_sync_id=UUID(str(res["repository_sync_id"]))
-                    if res.get("repository_sync_id")
+                    repository_sync_id=UUID(str(row["repository_sync_id"]))
+                    if row.get("repository_sync_id")
                     else None,
-                    repository_url=res.get("repository_url"),
-                    content_hash=res.get("content_hash"),
-                    branch=res.get("branch"),
-                    mime_type=res.get("mime_type"),
-                    indexed_at=res.get("indexed_at"),
-                    last_error=res.get("last_error"),
-                    version=int(res.get("version", 1)),
-                    superseded_by=UUID(str(res["superseded_by"]))
-                    if res.get("superseded_by")
+                    repository_url=row.get("repository_url"),
+                    content_hash=row.get("content_hash"),
+                    branch=row.get("branch"),
+                    mime_type=row.get("mime_type"),
+                    indexed_at=row.get("indexed_at"),
+                    last_error=row.get("last_error"),
+                    version=int(row.get("version", 1)),
+                    superseded_by=UUID(str(row["superseded_by"]))
+                    if row.get("superseded_by")
                     else None,
                 )
-                for res in (cast(dict[str, Any], r) for r in rows)
+                for row in rows
             ]
 
     async def save_chunks(self, document_uuid: str, chunks: list[dict]) -> None:
@@ -197,9 +200,7 @@ class PostgresDocumentRepo(DocumentRepoProto):
                         chunk["chunk_index"],
                         chunk["content"],
                         chunk.get("embedding"),
-                        # In Postgres JSONB, we prefer dict/list directly
-                        # psycopg will handle the conversion
-                        chunk.get("metadata", {}),
+                        json.dumps(chunk.get("metadata", {})),
                     )
                 )
 

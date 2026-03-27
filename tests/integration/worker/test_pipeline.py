@@ -70,7 +70,10 @@ async def test_full_pipeline_success():
 
     # 4. Prepare Context
     ctx = PipelineContext(
-        job_id="job-123", job_type="ingestion", payload={"document_id": str(doc_id)}
+        job_id="job-123",
+        job_type="ingestion",
+        payload={"doc_uuid": str(doc_id)},
+        document_id=str(doc_id),
     )
 
     # 5. Run

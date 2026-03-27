@@ -48,11 +48,15 @@ class IngestionWorker:
     async def _process_job(self, job):
         logger.info(f"[{self.worker_id}] Processing job {job.id} type {job.job_type}")
 
+        # Map doc_uuid from the payload to document_id in the context
+        document_id = job.payload.get("doc_uuid")
+
         # 1. Initialize PipelineContext with job data
         ctx = PipelineContext(
             job_id=str(job.id),
             job_type=job.job_type,
             payload=job.payload,
+            document_id=document_id,
         )
 
         try:

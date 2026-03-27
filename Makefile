@@ -1,10 +1,10 @@
 .PHONY: test test-all dev check migrate migrate-new migrate-status uv-add
 
 test:
-	docker compose run --rm app pytest
+	docker compose run -e TESTING=true --rm app pytest
 
 test-all:
-	docker compose run --rm app pytest -m ""
+	docker compose run -e TESTING=true --rm app pytest -m ""
 
 dev:
 	uv run uvicorn app.api.main:app --reload
