@@ -1,7 +1,7 @@
 [project]
 name = "own-copilot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Personal AI Coding Assistant (Copilot)"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -17,3 +17,28 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.15.8",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "N", "UP", "A", "C4", "SIM", "ARG", "PT", "RET", "ERA"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "e2e: marks tests as end-to-end integration tests (deselect with '-m \"not e2e\"')",
+]
+addopts = "-m 'not e2e'"
+
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+    "**/*.ipynb",
+]
+check-unannotated-defs = true
+strict-callable-subtyping = true
+infer-return-types = "checked"
