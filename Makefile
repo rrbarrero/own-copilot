@@ -10,8 +10,8 @@ dev:
 	uv run uvicorn app.api.main:app --reload
 
 check:
-	docker compose run --rm app ruff check .
-	docker compose run --rm app ruff format --check .
+	docker compose run --rm app ruff check --no-cache .
+	docker compose run --rm app ruff format --no-cache --check .
 	docker compose run --rm app pyrefly check .
 
 migrate:
