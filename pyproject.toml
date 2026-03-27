@@ -1,0 +1,19 @@
+[project]
+name = "own-copilot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.135.2",
+    "langchain-ollama>=1.0.1",
+    "pydantic>=2.12.5",
+    "uvicorn>=0.42.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyrefly>=0.58.0",
+    "pytest>=9.0.2",
+    "ruff>=0.15.8",
+]
