@@ -28,9 +28,8 @@ class IngestionService:
         mime_type: str | None,
         batch_id: uuid.UUID,
     ) -> uuid.UUID:
-        # Business logic: validate and store
+        # Business logic: validate (count/extension) and store raw
         ext = FileValidator.validate_file(filename, content_bytes)
-        content = content_bytes.decode("utf-8")
         doc_uuid = uuid.uuid4()
         content_hash = hashlib.sha256(content_bytes).hexdigest()
         now = datetime.now(UTC)
@@ -52,10 +51,11 @@ class IngestionService:
             mime_type=mime_type,
         )
 
+        # Store metadata and RAW bytes
         await self.doc_repo.save(document)
-        self.storage_repo.save(document.path, content)
+        self.storage_repo.save(document.path, content_bytes)
 
-        # Create background job for processing
+        # Create background job for processing (decoding/chunking/indexing)
         job = Job(
             id=uuid.uuid4(),
             queue_name="ingestion",

@@ -59,7 +59,7 @@ async def test_upload_file_success(ingestion_service, doc_repo, storage_repo, jo
 
     # 2. File stored
     stored_content = storage_repo.get(doc.path)
-    assert stored_content == content.decode("utf-8")
+    assert stored_content == content
 
     # 3. Job created
     # Find job for this doc_uuid in the payload
