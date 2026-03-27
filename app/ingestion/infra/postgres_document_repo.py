@@ -1,8 +1,8 @@
 from typing import Any, cast
 from uuid import UUID
 
-import psycopg
 from psycopg.rows import dict_row
+from psycopg_pool import AsyncConnectionPool
 
 from app.ingestion.domain.document import (
     Document,
@@ -14,54 +14,51 @@ from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 
 
 class PostgresDocumentRepo(DocumentRepoProto):
-    def __init__(self, connection_url: str):
-        self._connection_url = connection_url
+    def __init__(self, pool: AsyncConnectionPool):
+        self._pool = pool
 
     async def save(self, document: Document) -> None:
-        conn = await psycopg.AsyncConnection.connect(
-            self._connection_url, row_factory=dict_row
-        )
-        async with conn, conn.cursor() as cur:
+        async with self._pool.connection() as conn, conn.cursor() as cur:
             await cur.execute(
                 """
-                INSERT INTO documents (
-                    uuid, source_type, source_id, path, filename, extension,
-                    doc_type, processing_status, size_bytes, created_at,
-                    updated_at, language, upload_batch_id, repository_sync_id,
-                    repository_url, content_hash, branch, mime_type,
-                    indexed_at, last_error, version, superseded_by
-                ) VALUES (
-                    %(uuid)s, %(source_type)s, %(source_id)s, %(path)s,
-                    %(filename)s, %(extension)s, %(doc_type)s,
-                    %(processing_status)s, %(size_bytes)s, %(created_at)s,
-                    %(updated_at)s, %(language)s, %(upload_batch_id)s,
-                    %(repository_sync_id)s, %(repository_url)s,
-                    %(content_hash)s, %(branch)s, %(mime_type)s,
-                    %(indexed_at)s, %(last_error)s, %(version)s,
-                    %(superseded_by)s
-                )
-                ON CONFLICT (uuid) DO UPDATE SET
-                    source_type = EXCLUDED.source_type,
-                    source_id = EXCLUDED.source_id,
-                    path = EXCLUDED.path,
-                    filename = EXCLUDED.filename,
-                    extension = EXCLUDED.extension,
-                    doc_type = EXCLUDED.doc_type,
-                    processing_status = EXCLUDED.processing_status,
-                    size_bytes = EXCLUDED.size_bytes,
-                    updated_at = EXCLUDED.updated_at,
-                    language = EXCLUDED.language,
-                    upload_batch_id = EXCLUDED.upload_batch_id,
-                    repository_sync_id = EXCLUDED.repository_sync_id,
-                    repository_url = EXCLUDED.repository_url,
-                    content_hash = EXCLUDED.content_hash,
-                    branch = EXCLUDED.branch,
-                    mime_type = EXCLUDED.mime_type,
-                    indexed_at = EXCLUDED.indexed_at,
-                    last_error = EXCLUDED.last_error,
-                    version = EXCLUDED.version,
-                    superseded_by = EXCLUDED.superseded_by;
-                """,
+                    INSERT INTO documents (
+                        uuid, source_type, source_id, path, filename, extension,
+                        doc_type, processing_status, size_bytes, created_at,
+                        updated_at, language, upload_batch_id, repository_sync_id,
+                        repository_url, content_hash, branch, mime_type,
+                        indexed_at, last_error, version, superseded_by
+                    ) VALUES (
+                        %(uuid)s, %(source_type)s, %(source_id)s, %(path)s,
+                        %(filename)s, %(extension)s, %(doc_type)s,
+                        %(processing_status)s, %(size_bytes)s, %(created_at)s,
+                        %(updated_at)s, %(language)s, %(upload_batch_id)s,
+                        %(repository_sync_id)s, %(repository_url)s,
+                        %(content_hash)s, %(branch)s, %(mime_type)s,
+                        %(indexed_at)s, %(last_error)s, %(version)s,
+                        %(superseded_by)s
+                    )
+                    ON CONFLICT (uuid) DO UPDATE SET
+                        source_type = EXCLUDED.source_type,
+                        source_id = EXCLUDED.source_id,
+                        path = EXCLUDED.path,
+                        filename = EXCLUDED.filename,
+                        extension = EXCLUDED.extension,
+                        doc_type = EXCLUDED.doc_type,
+                        processing_status = EXCLUDED.processing_status,
+                        size_bytes = EXCLUDED.size_bytes,
+                        updated_at = EXCLUDED.updated_at,
+                        language = EXCLUDED.language,
+                        upload_batch_id = EXCLUDED.upload_batch_id,
+                        repository_sync_id = EXCLUDED.repository_sync_id,
+                        repository_url = EXCLUDED.repository_url,
+                        content_hash = EXCLUDED.content_hash,
+                        branch = EXCLUDED.branch,
+                        mime_type = EXCLUDED.mime_type,
+                        indexed_at = EXCLUDED.indexed_at,
+                        last_error = EXCLUDED.last_error,
+                        version = EXCLUDED.version,
+                        superseded_by = EXCLUDED.superseded_by;
+                    """,
                 {
                     "uuid": str(document.uuid),
                     "source_type": document.source_type.value,
@@ -93,7 +90,6 @@ class PostgresDocumentRepo(DocumentRepoProto):
                     else None,
                 },
             )
-            await conn.commit()
 
     async def get_by_uuid(self, uuid: str) -> Document | None:
         try:
@@ -101,10 +97,8 @@ class PostgresDocumentRepo(DocumentRepoProto):
         except ValueError:
             return None
 
-        conn = await psycopg.AsyncConnection.connect(
-            self._connection_url, row_factory=dict_row
-        )
-        async with conn, conn.cursor() as cur:
+        async with self._pool.connection() as conn, conn.cursor() as cur:
+            conn.row_factory = cast(Any, dict_row)
             await cur.execute(
                 "SELECT * FROM documents WHERE uuid = %s", (str(doc_uuid),)
             )

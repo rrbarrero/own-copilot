@@ -50,6 +50,31 @@ CREATE TABLE public.documents (
 
 
 --
+-- Name: ingestion_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ingestion_jobs (
+    id uuid NOT NULL,
+    queue_name character varying(50) NOT NULL,
+    job_type character varying(100) NOT NULL,
+    payload jsonb NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    max_attempts integer DEFAULT 5 NOT NULL,
+    run_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    locked_at timestamp with time zone,
+    locked_by character varying(255),
+    last_error text,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    priority integer DEFAULT 0 NOT NULL,
+    correlation_id uuid,
+    started_at timestamp with time zone,
+    finished_at timestamp with time zone
+);
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -67,11 +92,33 @@ ALTER TABLE ONLY public.documents
 
 
 --
+-- Name: ingestion_jobs ingestion_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ingestion_jobs
+    ADD CONSTRAINT ingestion_jobs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: idx_ingestion_jobs_queue_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ingestion_jobs_queue_name ON public.ingestion_jobs USING btree (queue_name);
+
+
+--
+-- Name: idx_ingestion_jobs_status_run_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ingestion_jobs_status_run_at ON public.ingestion_jobs USING btree (status, run_at);
 
 
 --
@@ -87,4 +134,5 @@ ALTER TABLE ONLY public.schema_migrations
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20260327105700'),
-    ('20260327121038');
+    ('20260327121038'),
+    ('20260327121326');

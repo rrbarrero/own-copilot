@@ -1,4 +1,4 @@
-.PHONY: test test-all dev check migrate migrate-new migrate-status
+.PHONY: test test-all dev check migrate migrate-new migrate-status uv-add
 
 test:
 	docker compose run --rm app pytest
@@ -22,3 +22,6 @@ migrate-new:
 
 migrate-status:
 	docker compose run --rm dbmate status
+
+uv-add:
+	docker compose run --rm app uv add $(pkg)
