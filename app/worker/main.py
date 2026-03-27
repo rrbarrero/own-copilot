@@ -2,9 +2,9 @@ import asyncio
 import logging
 import signal
 
-from app.infra.db import get_db_pool
+from app.factory import create_job_repo, get_db_pool
 from app.ingestion.application.worker_service import IngestionWorker
-from app.ingestion.infra.postgres_job_repo import PostgresJobRepo
+from app.worker.factory import create_pipeline
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,13 +17,19 @@ async def main():
     pool = get_db_pool()
     await pool.open()
 
-    job_repo = PostgresJobRepo(pool)
-    worker = IngestionWorker(job_repo)
+    # 1. Initialize dependencies using factories
+    job_repo = create_job_repo()
+    pipeline = create_pipeline()
 
-    # Signal handling
+    # 2. Setup worker
+    worker = IngestionWorker(job_repo=job_repo, pipeline=pipeline)
+
+    # 3. Signal handling
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, worker.stop)
+
+    logger.info("Worker is ready to process jobs")
 
     try:
         await worker.run()

@@ -179,3 +179,36 @@ class PostgresDocumentRepo(DocumentRepoProto):
                 )
                 for res in (cast(dict[str, Any], r) for r in rows)
             ]
+
+    async def save_chunks(self, document_uuid: str, chunks: list[dict]) -> None:
+        async with self._pool.connection() as conn, conn.cursor() as cur:
+            # 1. First, delete existing chunks for this document (idempotency)
+            await cur.execute(
+                "DELETE FROM document_chunks WHERE document_uuid = %s",
+                (str(document_uuid),),
+            )
+
+            # 2. Batch insert new chunks
+            rows = []
+            for chunk in chunks:
+                rows.append(
+                    (
+                        str(document_uuid),
+                        chunk["chunk_index"],
+                        chunk["content"],
+                        chunk.get("embedding"),
+                        # In Postgres JSONB, we prefer dict/list directly
+                        # psycopg will handle the conversion
+                        chunk.get("metadata", {}),
+                    )
+                )
+
+            if rows:
+                await cur.executemany(
+                    """
+                    INSERT INTO document_chunks (
+                        document_uuid, chunk_index, content, embedding, metadata
+                    ) VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    rows,
+                )

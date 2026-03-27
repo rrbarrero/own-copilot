@@ -7,6 +7,8 @@ from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 class InMemoryDocumentRepo(DocumentRepoProto):
     def __init__(self):
         self._documents: dict[UUID, Document] = {}
+        # document_uuid -> list[dict]
+        self._chunks: dict[str, list[dict]] = {}
 
     async def save(self, document: Document) -> None:
         self._documents[document.uuid] = document
@@ -22,3 +24,9 @@ class InMemoryDocumentRepo(DocumentRepoProto):
         return [
             doc for doc in self._documents.values() if doc.upload_batch_id == batch_id
         ]
+
+    async def save_chunks(self, document_uuid: str, chunks: list[dict]) -> None:
+        self._chunks[str(document_uuid)] = chunks
+
+    def get_chunks(self, document_uuid: str) -> list[dict]:
+        return self._chunks.get(str(document_uuid), [])

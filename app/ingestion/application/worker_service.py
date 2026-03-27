@@ -6,13 +6,21 @@ from datetime import UTC, datetime
 
 from app.ingestion.domain.job import JobStatus
 from app.ingestion.domain.job_repo_proto import JobRepoProto
+from app.worker.application.pipeline import Pipeline
+from app.worker.domain.pipeline_context import PipelineContext
 
 logger = logging.getLogger(__name__)
 
 
 class IngestionWorker:
-    def __init__(self, job_repo: JobRepoProto, queue_name: str = "ingestion"):
+    def __init__(
+        self,
+        job_repo: JobRepoProto,
+        pipeline: Pipeline,
+        queue_name: str = "ingestion",
+    ):
         self.job_repo = job_repo
+        self.pipeline = pipeline
         self.queue_name = queue_name
         self.worker_id = f"worker-{socket.gethostname()}-{os.getpid()}"
         self._shutdown = False
@@ -39,14 +47,28 @@ class IngestionWorker:
 
     async def _process_job(self, job):
         logger.info(f"[{self.worker_id}] Processing job {job.id} type {job.job_type}")
-        print(f"PROCESANDO JOB: {job.id} - {job.job_type} - Payload: {job.payload}")
 
-        # Simulate work
-        await asyncio.sleep(1)
+        # 1. Initialize PipelineContext with job data
+        ctx = PipelineContext(
+            job_id=str(job.id),
+            job_type=job.job_type,
+            payload=job.payload,
+        )
 
-        # Mark as completed
-        job.status = JobStatus.COMPLETED
+        try:
+            # 2. Run the pipeline
+            await self.pipeline.run(ctx)
+
+            # 3. Mark as completed
+            job.status = JobStatus.COMPLETED
+            logger.info(f"[{self.worker_id}] Job {job.id} completed")
+
+        except Exception as e:
+            logger.error(f"[{self.worker_id}] Job {job.id} failed: {e}")
+            job.status = JobStatus.FAILED
+            # You might want to save the error in the job as well
+
+        # 4. Finalize job status
         job.finished_at = datetime.now(UTC)
         job.updated_at = datetime.now(UTC)
         await self.job_repo.save(job)
-        logger.info(f"[{self.worker_id}] Job {job.id} completed")

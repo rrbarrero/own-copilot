@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     LLM_MODEL: str = "qwen3:8b-16k"
     LLM_TEMPERATURE: float = 0.0
+    EMBEDDING_MODEL: str = "bge-m3:latest"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     # Server Configuration
