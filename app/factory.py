@@ -25,6 +25,12 @@ from app.repositories.infra.postgres_repository_sync_repo import (
 from app.repositories.infra.repository_url_normalizer import (
     RepositoryUrlNormalizer,
 )
+from app.retrieval.application.chat_with_citations import ChatWithCitations
+from app.retrieval.application.retriever import Retriever
+from app.retrieval.infra.ollama_query_embedding_service import (
+    OllamaQueryEmbeddingService,
+)
+from app.retrieval.infra.postgres_retrieval_repo import PostgresRetrievalRepo
 
 
 def create_llm():
@@ -71,4 +77,29 @@ def create_ingestion_service() -> IngestionService:
         doc_repo=create_document_repo(),
         storage_repo=create_storage_repo(),
         job_repo=create_job_repo(),
+    )
+
+
+def create_retrieval_repo():
+    return PostgresRetrievalRepo(Database.get_pool())
+
+
+def create_query_embedding_service():
+    return OllamaQueryEmbeddingService(
+        model=settings.EMBEDDING_MODEL,
+        base_url=settings.OLLAMA_BASE_URL,
+    )
+
+
+def create_retriever():
+    return Retriever(
+        retrieval_repo=create_retrieval_repo(),
+        embedding_service=create_query_embedding_service(),
+    )
+
+
+def create_chat_with_citations():
+    return ChatWithCitations(
+        retriever=create_retriever(),
+        llm=create_llm(),
     )

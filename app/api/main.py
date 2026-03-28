@@ -2,10 +2,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.factory import create_llm
+from app.factory import create_chat_with_citations
 from app.infra.db import Database
 from app.ingestion.infra.endpoints import router as ingestion_router
 from app.repositories.infra.endpoints import router as repository_router
+from app.schemas.chat import ChatRequest, ChatResponse
 
 
 @asynccontextmanager
@@ -34,8 +35,7 @@ async def health():
     return {"status": "healthy"}
 
 
-@app.post("/chat")
-async def chat(query: str):
-    llm = create_llm()
-    response = await llm.ainvoke(query)
-    return {"response": response.content}
+@app.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    service = create_chat_with_citations()
+    return await service.chat(request)
