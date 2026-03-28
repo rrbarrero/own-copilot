@@ -2,7 +2,7 @@ import asyncio
 import logging
 import signal
 
-from app.factory import create_job_repo, get_db_pool
+from app.factory import create_document_repo, create_job_repo, get_db_pool
 from app.ingestion.application.worker_service import IngestionWorker
 from app.worker.factory import create_pipeline
 
@@ -19,10 +19,13 @@ async def main():
 
     # 1. Initialize dependencies using factories
     job_repo = create_job_repo()
+    doc_repo = create_document_repo()
     pipeline = create_pipeline()
 
     # 2. Setup worker
-    worker = IngestionWorker(job_repo=job_repo, pipeline=pipeline)
+    worker = IngestionWorker(
+        job_repo=job_repo, document_repo=doc_repo, pipeline=pipeline
+    )
 
     # 3. Signal handling
     loop = asyncio.get_running_loop()
