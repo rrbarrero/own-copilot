@@ -70,7 +70,7 @@ class IngestionWorker:
         except Exception as e:
             logger.error(f"[{self.worker_id}] Job {job.id} failed: {e}")
             job.status = JobStatus.FAILED
-            # You might want to save the error in the job as well
+            job.last_error = str(e)
 
         # 4. Finalize job status
         job.finished_at = datetime.now(UTC)
