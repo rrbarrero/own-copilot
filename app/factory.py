@@ -2,6 +2,7 @@ from app.config import settings
 from app.core.llm import llm
 from app.infra.db import get_db_pool
 from app.ingestion.application.ingestion_service import IngestionService
+from app.ingestion.domain.chunk_repo_proto import ChunkRepoProto
 from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 from app.ingestion.domain.job_repo_proto import JobRepoProto
 from app.ingestion.domain.storage_repo_proto import StorageRepoProto
@@ -15,6 +16,11 @@ def create_llm():
 
 
 def create_document_repo() -> DocumentRepoProto:
+    return PostgresDocumentRepo(get_db_pool())
+
+
+def create_chunk_repo() -> ChunkRepoProto:
+    # PostgresDocumentRepo currently implements both.
     return PostgresDocumentRepo(get_db_pool())
 
 

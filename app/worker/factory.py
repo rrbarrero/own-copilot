@@ -1,5 +1,9 @@
 from app.config import settings
-from app.factory import create_document_repo, create_storage_repo
+from app.factory import (
+    create_chunk_repo,
+    create_document_repo,
+    create_storage_repo,
+)
 from app.worker.application.pipeline import Pipeline
 from app.worker.application.steps.chunking_step import ChunkingStep
 from app.worker.application.steps.generate_embeddings_step import (
@@ -19,6 +23,7 @@ from app.worker.infrastructure.embeddings.ollama_embedding_service import (
 def create_pipeline() -> Pipeline:
     # 1. Initialize repositories
     doc_repo = create_document_repo()
+    chunk_repo = create_chunk_repo()
     storage_repo = create_storage_repo()
 
     # 2. Initialize domain services
@@ -33,7 +38,7 @@ def create_pipeline() -> Pipeline:
         LoadDocumentStep(document_repo=doc_repo, storage_repo=storage_repo),
         ChunkingStep(chunker=chunker),
         GenerateEmbeddingsStep(embedding_service=embedding_service),
-        SaveChunksStep(document_repo=doc_repo),
+        SaveChunksStep(chunk_repo=chunk_repo),
     ]
 
     # 4. Create and return the pipeline orchestrator

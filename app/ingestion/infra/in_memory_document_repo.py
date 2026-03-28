@@ -1,10 +1,11 @@
 from uuid import UUID
 
+from app.ingestion.domain.chunk_repo_proto import ChunkRepoProto
 from app.ingestion.domain.document import Document
 from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 
 
-class InMemoryDocumentRepo(DocumentRepoProto):
+class InMemoryDocumentRepo(DocumentRepoProto, ChunkRepoProto):
     def __init__(self):
         self._documents: dict[UUID, Document] = {}
         # document_uuid -> list[dict]

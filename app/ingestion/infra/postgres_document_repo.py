@@ -4,6 +4,7 @@ from uuid import UUID
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
+from app.ingestion.domain.chunk_repo_proto import ChunkRepoProto
 from app.ingestion.domain.document import (
     Document,
     DocumentType,
@@ -13,7 +14,7 @@ from app.ingestion.domain.document import (
 from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 
 
-class PostgresDocumentRepo(DocumentRepoProto):
+class PostgresDocumentRepo(DocumentRepoProto, ChunkRepoProto):
     def __init__(self, pool: AsyncConnectionPool):
         self._pool = pool
 
