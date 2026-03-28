@@ -2,8 +2,10 @@ from app.config import settings
 from app.factory import (
     create_chunk_repo,
     create_document_repo,
+    create_job_repo,
     create_storage_repo,
 )
+from app.worker.application.ingestion_worker import IngestionWorker
 from app.worker.application.pipeline import Pipeline
 from app.worker.application.steps.chunking_step import ChunkingStep
 from app.worker.application.steps.generate_embeddings_step import (
@@ -33,7 +35,7 @@ def create_pipeline() -> Pipeline:
         base_url=settings.OLLAMA_BASE_URL,
     )
 
-    # 3. Assemble steps in logical order
+    # 3. Assemble steps in logical order (Pipeline Composition Root)
     steps: list[StepProto] = [
         LoadDocumentStep(document_repo=doc_repo, storage_repo=storage_repo),
         ChunkingStep(chunker=chunker),
@@ -43,3 +45,15 @@ def create_pipeline() -> Pipeline:
 
     # 4. Create and return the pipeline orchestrator
     return Pipeline(steps=steps)
+
+
+def create_worker() -> IngestionWorker:
+    """
+    Factory to create a fully configured IngestionWorker.
+    This acts as the Composition Root for the background worker.
+    """
+    return IngestionWorker(
+        job_repo=create_job_repo(),
+        document_repo=create_document_repo(),
+        pipeline=create_pipeline(),
+    )

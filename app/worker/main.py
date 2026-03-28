@@ -2,9 +2,8 @@ import asyncio
 import logging
 import signal
 
-from app.factory import create_document_repo, create_job_repo, get_db_pool
-from app.worker.application.ingestion_worker import IngestionWorker
-from app.worker.factory import create_pipeline
+from app.factory import get_db_pool
+from app.worker.factory import create_worker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,15 +16,8 @@ async def main():
     pool = get_db_pool()
     await pool.open()
 
-    # 1. Initialize dependencies using factories
-    job_repo = create_job_repo()
-    doc_repo = create_document_repo()
-    pipeline = create_pipeline()
-
-    # 2. Setup worker
-    worker = IngestionWorker(
-        job_repo=job_repo, document_repo=doc_repo, pipeline=pipeline
-    )
+    # 1. Setup worker using centralized factory
+    worker = create_worker()
 
     # 3. Signal handling
     loop = asyncio.get_running_loop()
