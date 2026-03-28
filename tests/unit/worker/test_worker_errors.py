@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import pytest
 
-from app.ingestion.application.worker_service import IngestionWorker
 from app.ingestion.domain.document import (
     Document,
     DocumentType,
@@ -13,6 +12,7 @@ from app.ingestion.domain.document import (
 from app.ingestion.domain.job import Job, JobStatus
 from app.ingestion.infra.in_memory_document_repo import InMemoryDocumentRepo
 from app.ingestion.infra.in_memory_job_repo import InMemoryJobRepo
+from app.worker.application.ingestion_worker import IngestionWorker
 from app.worker.application.pipeline import Pipeline
 from app.worker.domain.pipeline_context import PipelineContext
 

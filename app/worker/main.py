@@ -3,7 +3,7 @@ import logging
 import signal
 
 from app.factory import create_document_repo, create_job_repo, get_db_pool
-from app.ingestion.application.worker_service import IngestionWorker
+from app.worker.application.ingestion_worker import IngestionWorker
 from app.worker.factory import create_pipeline
 
 logging.basicConfig(
