@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.ingestion.domain.job import Job, JobStatus
@@ -15,10 +16,14 @@ class InMemoryJobRepo(JobRepoProto):
         return self._jobs.get(job_id)
 
     async def claim_next_job(self, queue_name: str, locked_by: str) -> Job | None:
+        now = datetime.now(UTC)
         pending_jobs = [
             j
             for j in self._jobs.values()
-            if j.queue_name == queue_name and j.status == JobStatus.PENDING
+            if j.queue_name == queue_name
+            and j.status == JobStatus.PENDING
+            and j.run_at <= now
+            and j.attempts < j.max_attempts
         ]
         if not pending_jobs:
             return None
@@ -26,7 +31,12 @@ class InMemoryJobRepo(JobRepoProto):
         # Sort by priority desc, created_at asc
         pending_jobs.sort(key=lambda x: (-x.priority, x.created_at))
         job = pending_jobs[0]
+
+        # Update metadata to reflect the claim (matching Postgres behavior)
         job.status = JobStatus.PROCESSING
         job.locked_by = locked_by
+        job.locked_at = now
+        job.updated_at = now
         job.attempts += 1
+
         return job
