@@ -24,17 +24,17 @@ class PostgresDocumentRepo(DocumentRepoProto, ChunkRepoProto):
                     uuid, source_type, source_id, path, filename, extension,
                     doc_type, processing_status, size_bytes, created_at,
                     updated_at, language, upload_batch_id, repository_sync_id,
-                    repository_url, content_hash, branch, mime_type,
-                    indexed_at, last_error, version, superseded_by
+                    repository_id, repository_url, content_hash, branch,
+                    mime_type, indexed_at, last_error, version, superseded_by
                 ) VALUES (
                     %(uuid)s, %(source_type)s, %(source_id)s, %(path)s,
                     %(filename)s, %(extension)s, %(doc_type)s,
                     %(processing_status)s, %(size_bytes)s, %(created_at)s,
                     %(updated_at)s, %(language)s, %(upload_batch_id)s,
-                    %(repository_sync_id)s, %(repository_url)s,
-                    %(content_hash)s, %(branch)s, %(mime_type)s,
-                    %(indexed_at)s, %(last_error)s, %(version)s,
-                    %(superseded_by)s
+                    %(repository_sync_id)s, %(repository_id)s,
+                    %(repository_url)s, %(content_hash)s, %(branch)s,
+                    %(mime_type)s, %(indexed_at)s, %(last_error)s,
+                    %(version)s, %(superseded_by)s
                 )
                 ON CONFLICT (uuid) DO UPDATE SET
                     source_type = EXCLUDED.source_type,
@@ -49,6 +49,7 @@ class PostgresDocumentRepo(DocumentRepoProto, ChunkRepoProto):
                     language = EXCLUDED.language,
                     upload_batch_id = EXCLUDED.upload_batch_id,
                     repository_sync_id = EXCLUDED.repository_sync_id,
+                    repository_id = EXCLUDED.repository_id,
                     repository_url = EXCLUDED.repository_url,
                     content_hash = EXCLUDED.content_hash,
                     branch = EXCLUDED.branch,
