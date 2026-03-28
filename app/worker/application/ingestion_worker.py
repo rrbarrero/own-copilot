@@ -29,7 +29,7 @@ class IngestionWorker:
         self.worker_id = f"worker-{socket.gethostname()}-{os.getpid()}"
         self._shutdown = False
 
-    async def run(self):
+    async def run(self) -> None:
         logger.info(f"Starting worker {self.worker_id} on queue {self.queue_name}")
 
         while not self._shutdown:
@@ -46,7 +46,7 @@ class IngestionWorker:
                 logger.error(f"Error in worker loop: {e}")
                 await asyncio.sleep(5)
 
-    def stop(self):
+    def stop(self) -> None:
         self._shutdown = True
 
     async def _process_job(self, job: Job) -> None:
