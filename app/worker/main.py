@@ -2,7 +2,7 @@ import asyncio
 import logging
 import signal
 
-from app.factory import get_db_pool
+from app.infra.db import Database
 from app.worker.factory import create_worker
 
 logging.basicConfig(
@@ -13,7 +13,7 @@ logger = logging.getLogger("worker")
 
 
 async def main():
-    pool = get_db_pool()
+    pool = Database.get_pool()
     await pool.open()
 
     # 1. Setup worker using centralized factory
@@ -29,7 +29,7 @@ async def main():
     try:
         await worker.run()
     finally:
-        await pool.close()
+        await Database.close()
         logger.info("Worker shutdown complete")
 
 

@@ -3,18 +3,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.factory import create_llm
-from app.infra.db import close_db_pool, get_db_pool
+from app.infra.db import Database
 from app.ingestion.infra.endpoints import router as ingestion_router
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Startup: open the pool
-    pool = get_db_pool()
+    pool = Database.get_pool()
     await pool.open()
     yield
     # Shutdown: close the pool
-    await close_db_pool()
+    await Database.close()
 
 
 app = FastAPI(title="Own Copilot API", lifespan=lifespan)

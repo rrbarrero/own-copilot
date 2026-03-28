@@ -2,23 +2,33 @@ from psycopg_pool import AsyncConnectionPool
 
 from app.config import settings
 
-_pool: AsyncConnectionPool | None = None
 
+class Database:
+    """
+    Manages the Postgres database connection pool.
+    This encapsulates the global state and provides a cleaner interface
+    than raw global variables.
+    """
 
-def get_db_pool() -> AsyncConnectionPool:
-    global _pool
-    if _pool is None:
-        _pool = AsyncConnectionPool(
-            conninfo=settings.DATABASE_URL,
-            min_size=2,
-            max_size=10,
-            open=False,  # Don't open on creation
-        )
-    return _pool
+    _pool: AsyncConnectionPool | None = None
 
+    @classmethod
+    def get_pool(cls) -> AsyncConnectionPool:
+        if cls._pool is None:
+            cls._pool = AsyncConnectionPool(
+                conninfo=settings.DATABASE_URL,
+                min_size=2,
+                max_size=10,
+                open=False,  # Lifecycle is managed via open/close
+            )
+        return cls._pool
 
-async def close_db_pool() -> None:
-    global _pool
-    if _pool is not None:
-        await _pool.close()
-        _pool = None
+    @classmethod
+    async def close(cls) -> None:
+        if cls._pool is not None:
+            await cls._pool.close()
+            cls._pool = None
+
+    @classmethod
+    def is_open(cls) -> bool:
+        return cls._pool is not None
