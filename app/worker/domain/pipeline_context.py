@@ -1,18 +1,28 @@
-from dataclasses import dataclass, field
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-@dataclass
-class PipelineContext:
+class PipelineContext(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     job_id: str
     job_type: str
-    payload: dict
+    payload: dict[str, Any]
 
     document_id: str | None = None
     repository_sync_id: str | None = None
 
     original_bytes: bytes | None = None
-    normalized_document: dict | None = None
-    chunks: list[dict] = field(default_factory=list)
-    embeddings: list[list[float]] = field(default_factory=list)
+    normalized_document: dict[str, Any] | None = None
+    chunks: list[dict[str, Any]] = Field(default_factory=list)
+    embeddings: list[list[float]] = Field(default_factory=list)
 
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("job_id", "job_type")
+    @classmethod
+    def not_empty(cls, v: str):
+        if not v.strip():
+            raise ValueError("Field must not be empty.")
+        return v
