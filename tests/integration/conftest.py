@@ -28,6 +28,8 @@ async def clear_database():
         await cur.execute("TRUNCATE TABLE document_chunks CASCADE;")
         await cur.execute("TRUNCATE TABLE documents CASCADE;")
         await cur.execute("TRUNCATE TABLE ingestion_jobs CASCADE;")
+        await cur.execute("TRUNCATE TABLE repository_syncs CASCADE;")
+        await cur.execute("TRUNCATE TABLE repositories CASCADE;")
     await conn.commit()
     await conn.close()
 
@@ -39,5 +41,7 @@ async def clear_database():
         await cur.execute("TRUNCATE TABLE document_chunks CASCADE;")
         await cur.execute("TRUNCATE TABLE documents CASCADE;")
         await cur.execute("TRUNCATE TABLE ingestion_jobs CASCADE;")
+        await cur.execute("TRUNCATE TABLE repository_syncs CASCADE;")
+        await cur.execute("TRUNCATE TABLE repositories CASCADE;")
     await conn.commit()
     await conn.close()

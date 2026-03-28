@@ -16,3 +16,7 @@ class RepositorySyncRepoProto(Protocol):
     async def get_latest_by_repository_id(
         self, repository_id: UUID
     ) -> RepositorySync | None: ...
+
+    async def list_by_repository_id(
+        self, repository_id: UUID
+    ) -> list[RepositorySync]: ...
