@@ -20,6 +20,10 @@ jobs:
           docker compose build app
           make check
 
+      - name: Run Migrations
+        run: |
+          make migrate
+
       - name: Run Tests (excluding e2e)
         run: |
           make test
