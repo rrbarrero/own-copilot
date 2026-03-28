@@ -184,7 +184,11 @@ class PostgresDocumentRepo(DocumentRepoProto):
             ]
 
     async def save_chunks(self, document_uuid: str, chunks: list[dict]) -> None:
-        async with self._pool.connection() as conn, conn.cursor() as cur:
+        async with (
+            self._pool.connection() as conn,
+            conn.transaction(),
+            conn.cursor() as cur,
+        ):
             # 1. First, delete existing chunks for this document (idempotency)
             await cur.execute(
                 "DELETE FROM document_chunks WHERE document_uuid = %s",
