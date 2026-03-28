@@ -25,8 +25,7 @@ class LoadDocumentStep(StepProto):
             raise ValueError(f"Document with uuid {doc_id} not found")
 
         # 3. Download document content using repository path
-        # The current storage protocol is synchronous
-        content = self.storage_repo.get(doc.path)
+        content = await self.storage_repo.get(doc.path)
         if content is None:
             raise ValueError(
                 f"Content for document {doc_id} at path {doc.path} not found"

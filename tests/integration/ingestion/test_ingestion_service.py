@@ -58,7 +58,7 @@ async def test_upload_file_success(ingestion_service, doc_repo, storage_repo, jo
     assert doc.upload_batch_id == batch_id
 
     # 2. File stored
-    stored_content = storage_repo.get(doc.path)
+    stored_content = await storage_repo.get(doc.path)
     assert stored_content == content
 
     # 3. Job created

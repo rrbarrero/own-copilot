@@ -57,7 +57,7 @@ async def test_full_pipeline_success():
         updated_at=datetime.now(UTC),
     )
     await doc_repo.save(doc)
-    storage_repo.save(doc_path, content)
+    await storage_repo.save(doc_path, content)
 
     # 3. Assemble Pipeline
     steps: list[StepProto] = [

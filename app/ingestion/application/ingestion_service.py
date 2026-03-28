@@ -53,7 +53,7 @@ class IngestionService:
 
         # Store metadata and RAW bytes
         await self.doc_repo.save(document)
-        self.storage_repo.save(document.path, content_bytes)
+        await self.storage_repo.save(document.path, content_bytes)
 
         # Create background job for processing (decoding/chunking/indexing)
         job = Job(
