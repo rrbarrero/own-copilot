@@ -4,6 +4,11 @@ FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS builder
 # Set the working directory
 WORKDIR /app
 
+# Install system dependencies including Git
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 
@@ -24,6 +29,11 @@ RUN uv sync --frozen
 FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim
 
 WORKDIR /app
+
+# Install runtime dependencies including Git
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy the environment from the builder
 COPY --from=builder /app /app

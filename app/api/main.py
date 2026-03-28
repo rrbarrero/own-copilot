@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.factory import create_llm
 from app.infra.db import Database
 from app.ingestion.infra.endpoints import router as ingestion_router
+from app.repositories.infra.endpoints import router as repository_router
 
 
 @asynccontextmanager
@@ -20,6 +21,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Own Copilot API", lifespan=lifespan)
 
 app.include_router(ingestion_router)
+app.include_router(repository_router)
 
 
 @app.get("/")

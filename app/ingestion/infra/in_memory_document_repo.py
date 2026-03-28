@@ -26,6 +26,33 @@ class InMemoryDocumentRepo(DocumentRepoProto, ChunkRepoProto):
             doc for doc in self._documents.values() if doc.upload_batch_id == batch_id
         ]
 
+    async def list_by_repository_sync_id(self, sync_id: UUID) -> list[Document]:
+        return [
+            doc for doc in self._documents.values() if doc.repository_sync_id == sync_id
+        ]
+
+    async def get_by_repository_and_source_id(
+        self, repository_id: UUID, source_id: str
+    ) -> Document | None:
+        for doc in self._documents.values():
+            if doc.repository_id == repository_id and doc.source_id == source_id:
+                return doc
+        return None
+
+    async def list_by_repository_id(self, repository_id: UUID) -> list[Document]:
+        return [
+            doc
+            for doc in self._documents.values()
+            if doc.repository_id == repository_id
+        ]
+
+    async def delete_by_uuids(self, uuids: list[UUID]) -> None:
+        for uid in uuids:
+            if uid in self._documents:
+                del self._documents[uid]
+                if str(uid) in self._chunks:
+                    del self._chunks[str(uid)]
+
     async def save_chunks(self, document_uuid: str, chunks: list[dict]) -> None:
         self._chunks[str(document_uuid)] = chunks
 

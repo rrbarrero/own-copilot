@@ -1,0 +1,10 @@
+from typing import Protocol
+from uuid import UUID
+
+from app.repositories.domain.repository import Repository
+
+
+class RepositoryRepoProto(Protocol):
+    async def save(self, repository: Repository) -> None: ...
+    async def get_by_id(self, repository_id: UUID) -> Repository | None: ...
+    async def get_by_normalized_url(self, normalized_url: str) -> Repository | None: ...

@@ -40,6 +40,7 @@ class Document:
     language: str | None = None
     upload_batch_id: UUID | None = None
     repository_sync_id: UUID | None = None
+    repository_id: UUID | None = None
     repository_url: str | None = None
     content_hash: str | None = None
     branch: str | None = None

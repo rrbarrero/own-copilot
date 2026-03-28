@@ -74,7 +74,8 @@ CREATE TABLE public.documents (
     indexed_at timestamp with time zone,
     last_error text,
     version integer DEFAULT 1,
-    superseded_by uuid
+    superseded_by uuid,
+    repository_id uuid
 );
 
 
@@ -100,6 +101,47 @@ CREATE TABLE public.ingestion_jobs (
     correlation_id uuid,
     started_at timestamp with time zone,
     finished_at timestamp with time zone
+);
+
+
+--
+-- Name: repositories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.repositories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    provider character varying(30) NOT NULL,
+    clone_url text NOT NULL,
+    normalized_clone_url text NOT NULL,
+    owner character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    default_branch character varying(255),
+    local_path text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    last_synced_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: repository_syncs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.repository_syncs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    repository_id uuid NOT NULL,
+    branch character varying(255) NOT NULL,
+    commit_sha character varying(64),
+    status character varying(20) NOT NULL,
+    started_at timestamp with time zone NOT NULL,
+    finished_at timestamp with time zone,
+    last_error text,
+    scanned_files integer DEFAULT 0 NOT NULL,
+    changed_files integer DEFAULT 0 NOT NULL,
+    deleted_files integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -137,6 +179,30 @@ ALTER TABLE ONLY public.ingestion_jobs
 
 
 --
+-- Name: repositories repositories_normalized_clone_url_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.repositories
+    ADD CONSTRAINT repositories_normalized_clone_url_key UNIQUE (normalized_clone_url);
+
+
+--
+-- Name: repositories repositories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.repositories
+    ADD CONSTRAINT repositories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: repository_syncs repository_syncs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.repository_syncs
+    ADD CONSTRAINT repository_syncs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -159,6 +225,27 @@ CREATE INDEX idx_document_chunks_embedding ON public.document_chunks USING hnsw 
 
 
 --
+-- Name: idx_documents_repository_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_repository_id ON public.documents USING btree (repository_id);
+
+
+--
+-- Name: idx_documents_repository_sync_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_repository_sync_id ON public.documents USING btree (repository_sync_id);
+
+
+--
+-- Name: idx_documents_upload_batch_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_upload_batch_id ON public.documents USING btree (upload_batch_id);
+
+
+--
 -- Name: idx_ingestion_jobs_queue_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -173,11 +260,41 @@ CREATE INDEX idx_ingestion_jobs_status_run_at ON public.ingestion_jobs USING btr
 
 
 --
+-- Name: idx_repository_syncs_repo_id_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_repository_syncs_repo_id_created ON public.repository_syncs USING btree (repository_id, created_at DESC);
+
+
+--
+-- Name: idx_repository_syncs_repo_id_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_repository_syncs_repo_id_status ON public.repository_syncs USING btree (repository_id, status);
+
+
+--
 -- Name: document_chunks document_chunks_document_uuid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.document_chunks
     ADD CONSTRAINT document_chunks_document_uuid_fkey FOREIGN KEY (document_uuid) REFERENCES public.documents(uuid) ON DELETE CASCADE;
+
+
+--
+-- Name: documents documents_repository_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_repository_id_fkey FOREIGN KEY (repository_id) REFERENCES public.repositories(id);
+
+
+--
+-- Name: repository_syncs repository_syncs_repository_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.repository_syncs
+    ADD CONSTRAINT repository_syncs_repository_id_fkey FOREIGN KEY (repository_id) REFERENCES public.repositories(id);
 
 
 --
@@ -197,4 +314,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260327121326'),
     ('20260327153144'),
     ('20260327153924'),
-    ('20260327155454');
+    ('20260327155454'),
+    ('20260328111030');

@@ -12,7 +12,13 @@ from app.ingestion.domain.document import (
 from app.ingestion.domain.job import Job, JobStatus
 from app.ingestion.infra.in_memory_document_repo import InMemoryDocumentRepo
 from app.ingestion.infra.in_memory_job_repo import InMemoryJobRepo
+from app.worker.application.document_processing_service import (
+    DocumentProcessingService,
+)
 from app.worker.application.ingestion_worker import IngestionWorker
+from app.worker.application.job_handlers.process_document_handler import (
+    ProcessDocumentJobHandler,
+)
 from app.worker.application.pipeline import Pipeline
 from app.worker.domain.pipeline_context import PipelineContext
 
@@ -41,9 +47,12 @@ async def test_worker_persists_last_error_on_failure():
     doc_repo = InMemoryDocumentRepo()
     error_msg = "Critical error during pipeline execution"
     pipeline = FailingPipeline(error_msg)
-    worker = IngestionWorker(
-        job_repo=job_repo, document_repo=doc_repo, pipeline=pipeline
-    )
+
+    # Use a real handler with the failing pipeline
+    processing_service = DocumentProcessingService(doc_repo=doc_repo, pipeline=pipeline)
+    handler = ProcessDocumentJobHandler(processing_service)
+
+    worker = IngestionWorker(job_repo=job_repo, handlers={"test": handler})
 
     doc_id = uuid4()
     doc = Document(
@@ -96,9 +105,11 @@ async def test_worker_updates_document_status_on_success():
     job_repo = InMemoryJobRepo()
     doc_repo = InMemoryDocumentRepo()
     pipeline = SuccessPipeline()
-    worker = IngestionWorker(
-        job_repo=job_repo, document_repo=doc_repo, pipeline=pipeline
-    )
+
+    processing_service = DocumentProcessingService(doc_repo=doc_repo, pipeline=pipeline)
+    handler = ProcessDocumentJobHandler(processing_service)
+
+    worker = IngestionWorker(job_repo=job_repo, handlers={"test": handler})
 
     doc_id = uuid4()
     doc = Document(

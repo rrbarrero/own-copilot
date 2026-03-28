@@ -3,9 +3,25 @@ from app.factory import (
     create_chunk_repo,
     create_document_repo,
     create_job_repo,
+    create_repository_repo,
+    create_repository_sync_repo,
     create_storage_repo,
 )
+from app.repositories.infra.repository_scanner import RepositoryScanner
+from app.repositories.infra.subprocess_git_repository_service import (
+    SubprocessGitRepositoryService,
+)
+from app.worker.application.document_processing_service import (
+    DocumentProcessingService,
+)
 from app.worker.application.ingestion_worker import IngestionWorker
+from app.worker.application.job_handler_proto import JobHandlerProto
+from app.worker.application.job_handlers.process_document_handler import (
+    ProcessDocumentJobHandler,
+)
+from app.worker.application.job_handlers.sync_repository_handler import (
+    SyncRepositoryJobHandler,
+)
 from app.worker.application.pipeline import Pipeline
 from app.worker.application.steps.chunking_step import ChunkingStep
 from app.worker.application.steps.generate_embeddings_step import (
@@ -52,8 +68,29 @@ def create_worker() -> IngestionWorker:
     Factory to create a fully configured IngestionWorker.
     This acts as the Composition Root for the background worker.
     """
+    doc_repo = create_document_repo()
+    storage_repo = create_storage_repo()
+    pipeline = create_pipeline()
+
+    processing_service = DocumentProcessingService(doc_repo=doc_repo, pipeline=pipeline)
+
+    # Register handlers
+    handlers: dict[str, JobHandlerProto] = {
+        "process_document": ProcessDocumentJobHandler(processing_service),
+        "sync_repository": SyncRepositoryJobHandler(
+            repository_repo=create_repository_repo(),
+            sync_repo=create_repository_sync_repo(),
+            git_service=SubprocessGitRepositoryService(
+                checkouts_root=f"{settings.STORAGE_PATH}/checkouts"
+            ),
+            scanner=RepositoryScanner(),
+            document_repo=doc_repo,
+            storage_repo=storage_repo,
+            processing_service=processing_service,
+        ),
+    }
+
     return IngestionWorker(
         job_repo=create_job_repo(),
-        document_repo=create_document_repo(),
-        pipeline=create_pipeline(),
+        handlers=handlers,
     )

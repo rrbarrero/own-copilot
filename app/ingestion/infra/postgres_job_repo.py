@@ -156,3 +156,61 @@ class PostgresJobRepo(JobRepoProto):
                 started_at=row.get("started_at"),
                 finished_at=row.get("finished_at"),
             )
+
+    async def find_active_repository_sync_job(self, repository_id: UUID) -> Job | None:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                """
+                SELECT * FROM ingestion_jobs
+                WHERE job_type = 'sync_repository'
+                  AND payload->>'repository_id' = %s
+                  AND status IN ('pending', 'processing')
+                LIMIT 1
+                """,
+                (str(repository_id),),
+            )
+            row = await cur.fetchone()
+            if not row:
+                return None
+
+            return self._row_to_entity(row)
+
+    async def list_by_correlation_id(self, correlation_id: UUID) -> list[Job]:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                "SELECT * FROM ingestion_jobs WHERE correlation_id = %s",
+                (str(correlation_id),),
+            )
+            rows = await cur.fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def _row_to_entity(self, row: dict) -> Job:
+        return Job(
+            id=UUID(str(row["id"])),
+            queue_name=str(row["queue_name"]),
+            job_type=str(row["job_type"]),
+            payload=row["payload"]
+            if isinstance(row["payload"], dict)
+            else json.loads(row["payload"]),
+            status=JobStatus(str(row["status"])),
+            attempts=int(row["attempts"]),
+            max_attempts=int(row["max_attempts"]),
+            run_at=row["run_at"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            priority=int(row["priority"]),
+            correlation_id=UUID(str(row["correlation_id"]))
+            if row.get("correlation_id")
+            else None,
+            locked_at=row.get("locked_at"),
+            locked_by=row.get("locked_by"),
+            last_error=row.get("last_error"),
+            started_at=row.get("started_at"),
+            finished_at=row.get("finished_at"),
+        )

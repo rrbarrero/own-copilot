@@ -77,6 +77,9 @@ class PostgresDocumentRepo(DocumentRepoProto, ChunkRepoProto):
                     "repository_sync_id": str(document.repository_sync_id)
                     if document.repository_sync_id
                     else None,
+                    "repository_id": str(document.repository_id)
+                    if document.repository_id
+                    else None,
                     "repository_url": document.repository_url,
                     "content_hash": document.content_hash,
                     "branch": document.branch,
@@ -120,6 +123,56 @@ class PostgresDocumentRepo(DocumentRepoProto, ChunkRepoProto):
             )
             rows = await cur.fetchall()
             return [document_row_adapter(row) for row in rows]
+
+    async def list_by_repository_sync_id(self, sync_id: UUID) -> list[Document]:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                "SELECT * FROM documents WHERE repository_sync_id = %s",
+                (str(sync_id),),
+            )
+            rows = await cur.fetchall()
+            return [document_row_adapter(row) for row in rows]
+
+    async def get_by_repository_and_source_id(
+        self, repository_id: UUID, source_id: str
+    ) -> Document | None:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                "SELECT * FROM documents WHERE repository_id = %s AND source_id = %s",
+                (str(repository_id), source_id),
+            )
+            row = await cur.fetchone()
+            return document_row_adapter(row) if row else None
+
+    async def list_by_repository_id(self, repository_id: UUID) -> list[Document]:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                "SELECT * FROM documents WHERE repository_id = %s",
+                (str(repository_id),),
+            )
+            rows = await cur.fetchall()
+            return [document_row_adapter(row) for row in rows]
+
+    async def delete_by_uuids(self, uuids: list[UUID]) -> None:
+        if not uuids:
+            return
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor() as cur,
+        ):
+            await cur.execute(
+                "DELETE FROM documents WHERE uuid = ANY(%s)",
+                ([str(u) for u in uuids],),
+            )
 
     async def save_chunks(self, document_uuid: str, chunks: list[dict]) -> None:
         async with (

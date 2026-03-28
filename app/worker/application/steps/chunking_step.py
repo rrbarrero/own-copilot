@@ -9,12 +9,17 @@ class ChunkingStep(StepProto):
 
     async def run(self, ctx: PipelineContext):
         # 1. Check if original_bytes are present (loaded by previous step)
-        if not ctx.original_bytes:
+        if ctx.original_bytes is None:
             raise ValueError(
                 "original_bytes are missing in context. Run LoadDocumentStep first."
             )
 
-        # 2. Decode bytes to text (assuming UTF-8 for now)
+        # 2. Handle empty files gracefully
+        if not ctx.original_bytes:
+            ctx.chunks = []
+            return
+
+        # 3. Decode bytes to text (assuming UTF-8 for now)
         try:
             text = ctx.original_bytes.decode("utf-8")
         except UnicodeDecodeError as e:

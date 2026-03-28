@@ -32,6 +32,9 @@ def document_row_adapter(row: dict) -> Document:
         repository_sync_id=UUID(str(row["repository_sync_id"]))
         if row.get("repository_sync_id")
         else None,
+        repository_id=UUID(str(row["repository_id"]))
+        if row.get("repository_id")
+        else None,
         repository_url=row.get("repository_url"),
         content_hash=row.get("content_hash"),
         branch=row.get("branch"),

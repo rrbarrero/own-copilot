@@ -9,6 +9,22 @@ from app.ingestion.domain.storage_repo_proto import StorageRepoProto
 from app.ingestion.infra.in_filesystem_storage_repo import InFilesystemStorageRepo
 from app.ingestion.infra.postgres_document_repo import PostgresDocumentRepo
 from app.ingestion.infra.postgres_job_repo import PostgresJobRepo
+from app.repositories.application.request_repository_sync import (
+    RequestRepositorySync,
+)
+from app.repositories.domain.repository_repo_proto import RepositoryRepoProto
+from app.repositories.domain.repository_sync_repo_proto import (
+    RepositorySyncRepoProto,
+)
+from app.repositories.infra.postgres_repository_repo import (
+    PostgresRepositoryRepo,
+)
+from app.repositories.infra.postgres_repository_sync_repo import (
+    PostgresRepositorySyncRepo,
+)
+from app.repositories.infra.repository_url_normalizer import (
+    RepositoryUrlNormalizer,
+)
 
 
 def create_llm():
@@ -30,6 +46,24 @@ def create_storage_repo() -> StorageRepoProto:
 
 def create_job_repo() -> JobRepoProto:
     return PostgresJobRepo(Database.get_pool())
+
+
+def create_repository_repo() -> RepositoryRepoProto:
+    return PostgresRepositoryRepo(Database.get_pool())
+
+
+def create_repository_sync_repo() -> RepositorySyncRepoProto:
+    return PostgresRepositorySyncRepo(Database.get_pool())
+
+
+def create_request_repository_sync() -> RequestRepositorySync:
+    return RequestRepositorySync(
+        repository_repo=create_repository_repo(),
+        job_repo=create_job_repo(),
+        url_normalizer=RepositoryUrlNormalizer(),
+        # Use STORAGE_PATH/checkouts for git roots
+        checkouts_root=f"{settings.STORAGE_PATH}/checkouts",
+    )
 
 
 def create_ingestion_service() -> IngestionService:

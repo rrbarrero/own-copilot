@@ -40,3 +40,23 @@ class InMemoryJobRepo(JobRepoProto):
         job.attempts += 1
 
         return job
+
+    async def find_active_repository_sync_job(self, repository_id: UUID) -> Job | None:
+        for job in self._jobs.values():
+            if (
+                job.job_type == "sync_repository"
+                and job.payload.get("repository_id") == str(repository_id)
+                and job.status in (JobStatus.PENDING, JobStatus.PROCESSING)
+            ):
+                return job
+        return None
+
+    async def list_by_correlation_id(self, correlation_id: UUID) -> list[Job]:
+        # Correlation ID is stored in metadata/payload depending on job type.
+        # For mock purposes, we'll check common places.
+        return [
+            j
+            for j in self._jobs.values()
+            if j.id == correlation_id
+            or j.payload.get("correlation_id") == str(correlation_id)
+        ]
