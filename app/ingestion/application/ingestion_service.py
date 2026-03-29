@@ -32,6 +32,12 @@ class IngestionService:
         ext = FileValidator.validate_file(filename, content_bytes)
         doc_uuid = uuid.uuid4()
         content_hash = hashlib.sha256(content_bytes).hexdigest()
+
+        # Deduplication: check if hash already exists
+        existing_doc = await self.doc_repo.get_by_hash(content_hash)
+        if existing_doc:
+            return existing_doc.uuid
+
         now = datetime.now(UTC)
 
         document = Document(

@@ -225,6 +225,13 @@ CREATE INDEX idx_document_chunks_embedding ON public.document_chunks USING hnsw 
 
 
 --
+-- Name: idx_documents_content_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_documents_content_hash ON public.documents USING btree (content_hash);
+
+
+--
 -- Name: idx_documents_repository_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -315,4 +322,6 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260327153144'),
     ('20260327153924'),
     ('20260327155454'),
-    ('20260328111030');
+    ('20260328111030'),
+    ('20260329105900'),
+    ('20260329110800');

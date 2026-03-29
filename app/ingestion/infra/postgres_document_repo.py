@@ -161,6 +161,17 @@ class PostgresDocumentRepo(DocumentRepoProto):
             rows = await cur.fetchall()
             return [document_row_adapter(row) for row in rows]
 
+    async def get_by_hash(self, content_hash: str) -> Document | None:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                "SELECT * FROM documents WHERE content_hash = %s", (content_hash,)
+            )
+            row = await cur.fetchone()
+            return document_row_adapter(row) if row else None
+
     async def delete_by_uuids(self, uuids: list[UUID]) -> None:
         if not uuids:
             return

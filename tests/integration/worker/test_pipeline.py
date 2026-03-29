@@ -9,6 +9,7 @@ from app.ingestion.domain.document import (
     ProcessingStatus,
     SourceType,
 )
+from app.ingestion.infra.in_memory_chunk_repo import InMemoryChunkRepo
 from app.ingestion.infra.in_memory_document_repo import InMemoryDocumentRepo
 from app.ingestion.infra.in_memory_storage_repo import InMemoryStorageRepo
 from app.worker.application.pipeline import Pipeline
@@ -30,6 +31,7 @@ from app.worker.infrastructure.embeddings.in_memory_embedding_service import (
 async def test_full_pipeline_success():
     # 1. Setup in-memory dependencies
     doc_repo = InMemoryDocumentRepo()
+    chunk_repo = InMemoryChunkRepo()
     storage_repo = InMemoryStorageRepo()
     embedding_service = InMemoryEmbeddingService()
 
@@ -64,7 +66,7 @@ async def test_full_pipeline_success():
         LoadDocumentStep(doc_repo, storage_repo),
         ChunkingStep(chunker),
         GenerateEmbeddingsStep(embedding_service),
-        SaveChunksStep(doc_repo),
+        SaveChunksStep(chunk_repo),
     ]
     pipeline = Pipeline(steps)
 
@@ -87,7 +89,7 @@ async def test_full_pipeline_success():
     assert len(ctx.chunks[0]["embedding"]) == 1024
 
     # Check persistence in in-memory repo
-    saved_chunks = doc_repo.get_chunks(str(doc_id))
+    saved_chunks = chunk_repo.get_chunks(str(doc_id))
     assert len(saved_chunks) == len(ctx.chunks)
     assert saved_chunks[0]["content"] == ctx.chunks[0]["content"]
     assert saved_chunks[0]["embedding"] == ctx.chunks[0]["embedding"]
