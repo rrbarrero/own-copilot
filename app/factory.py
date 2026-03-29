@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from app.config import settings
 from app.core.llm import get_llm
 from app.infra.db import Database
@@ -34,6 +36,7 @@ from app.retrieval.infra.ollama_query_embedding_service import (
 from app.retrieval.infra.postgres_retrieval_repo import PostgresRetrievalRepo
 
 
+@lru_cache
 def create_llm():
     return get_llm()
 
@@ -84,6 +87,7 @@ def create_retrieval_repo():
     return PostgresRetrievalRepo(Database.get_pool())
 
 
+@lru_cache
 def create_query_embedding_service():
     return OllamaQueryEmbeddingService(
         model=settings.EMBEDDING_MODEL,
@@ -91,6 +95,7 @@ def create_query_embedding_service():
     )
 
 
+@lru_cache
 def create_retriever():
     return Retriever(
         retrieval_repo=create_retrieval_repo(),
@@ -98,6 +103,7 @@ def create_retriever():
     )
 
 
+@lru_cache
 def create_chat_with_citations():
     return ChatWithCitations(
         retriever=create_retriever(),
