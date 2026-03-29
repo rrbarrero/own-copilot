@@ -10,5 +10,8 @@ class OllamaEmbeddingService:
         )
 
     async def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        # langchain-ollama OllamaEmbeddings.aembed_documents exists for async
         return await self._embeddings.aembed_documents(texts)
+
+    async def get_dimension(self) -> int:
+        test_embed = await self.embed_documents(["test"])
+        return len(test_embed[0])

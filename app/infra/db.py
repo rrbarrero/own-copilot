@@ -24,6 +24,28 @@ class Database:
         return cls._pool
 
     @classmethod
+    async def get_embedding_dimension(cls) -> int:
+        if cls._pool is None:
+            raise RuntimeError("Database pool not initialized")
+        async with (
+            cls._pool.connection() as conn,
+            conn.cursor() as cur,
+        ):
+            # Query for the dimension of the embedding column
+            await cur.execute(
+                """
+                SELECT atttypmod
+                FROM pg_attribute
+                WHERE attrelid = 'public.document_chunks'::regclass
+                AND attname = 'embedding'
+            """
+            )
+            row = await cur.fetchone()
+            if row and row[0] != -1:
+                return row[0]
+            return -1
+
+    @classmethod
     async def close(cls) -> None:
         if cls._pool is not None:
             await cls._pool.close()
