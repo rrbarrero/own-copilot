@@ -77,6 +77,7 @@ class IngestionService:
             correlation_id=batch_id,
         )
         await self.job_repo.save(job)
+        await self.job_repo.notify_new_job(job.queue_name)
 
         return doc_uuid
 

@@ -24,3 +24,11 @@ class JobRepoProto(Protocol):
     async def list_by_correlation_id(self, correlation_id: UUID) -> list[Job]:
         """Lists all jobs sharing the same correlation identifier."""
         ...
+
+    async def wait_for_job(self, queue_name: str, timeout: float) -> None:
+        """Waits for a notification about a new job in the queue or until timeout."""
+        ...
+
+    async def notify_new_job(self, queue_name: str) -> None:
+        """Sends a notification about a new job in the queue."""
+        ...

@@ -1,6 +1,8 @@
+import asyncio
 import json
 from uuid import UUID
 
+from psycopg import sql
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
@@ -60,6 +62,15 @@ class PostgresJobRepo(JobRepoProto):
                     "finished_at": job.finished_at,
                 },
             )
+
+    async def notify_new_job(self, queue_name: str) -> None:
+        """Sends a notification about a new job in the queue."""
+        async with self._pool.connection() as conn:
+            await conn.execute(
+                sql.SQL("NOTIFY {}").format(sql.Identifier(f"new_job_{queue_name}"))
+            )
+            if not conn.autocommit:
+                await conn.commit()
 
     async def get_by_id(self, job_id: UUID) -> Job | None:
         async with (
@@ -214,3 +225,54 @@ class PostgresJobRepo(JobRepoProto):
             started_at=row.get("started_at"),
             finished_at=row.get("finished_at"),
         )
+
+    async def wait_for_job(self, queue_name: str, timeout: float) -> None:
+        channel = f"new_job_{queue_name}"
+        async with self._pool.connection() as conn:
+            # 1. Start listening on the channel
+            await conn.execute(sql.SQL("LISTEN {}").format(sql.Identifier(channel)))
+            if not conn.autocommit:
+                await conn.commit()
+
+            # 2. Check for jobs JUST AFTER starting to listen.
+            # This avoids the race condition where a job is added between
+            # claim_next_job and the LISTEN command.
+            if await self._has_pending_jobs(conn, queue_name):
+                await conn.execute(
+                    sql.SQL("UNLISTEN {}").format(sql.Identifier(channel))
+                )
+                if not conn.autocommit:
+                    await conn.commit()
+                return
+
+            # 3. Wait for notification
+            async def _receive():
+                async for _ in conn.notifies():
+                    return
+
+            try:
+                await asyncio.wait_for(_receive(), timeout=timeout)
+            except TimeoutError:
+                pass
+            finally:
+                await conn.execute(
+                    sql.SQL("UNLISTEN {}").format(sql.Identifier(channel))
+                )
+                if not conn.autocommit:
+                    await conn.commit()
+
+    async def _has_pending_jobs(self, conn, queue_name: str) -> bool:
+        """Checks if there are any jobs available for claiming."""
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT 1 FROM ingestion_jobs
+                WHERE queue_name = %s
+                  AND status = 'pending'
+                  AND run_at <= NOW()
+                  AND attempts < max_attempts
+                LIMIT 1;
+                """,
+                (queue_name,),
+            )
+            return await cur.fetchone() is not None

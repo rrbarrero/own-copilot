@@ -90,6 +90,7 @@ class RequestRepositorySync:
             priority=10,  # Higher priority for syncs than single docs?
         )
         await self._job_repo.save(job)
+        await self._job_repo.notify_new_job(job.queue_name)
 
         return RequestRepositorySyncResult(
             repository_id=repo.id,

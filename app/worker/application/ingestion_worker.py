@@ -35,8 +35,8 @@ class IngestionWorker:
                 if job:
                     await self._process_job(job)
                 else:
-                    # No jobs, sleep a bit
-                    await asyncio.sleep(5)
+                    # No jobs, wait for a notification or timeout (fallback polling)
+                    await self.job_repo.wait_for_job(self.queue_name, timeout=30.0)
             except Exception as e:
                 logger.error(f"Error in worker loop: {e}")
                 await asyncio.sleep(5)

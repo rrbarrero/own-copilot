@@ -60,3 +60,13 @@ class InMemoryJobRepo(JobRepoProto):
             if j.id == correlation_id
             or j.payload.get("correlation_id") == str(correlation_id)
         ]
+
+    async def wait_for_job(self, queue_name: str, timeout: float) -> None:
+        """In-memory: just waits or returns if job already exists."""
+        # For tests, we might want to actually wait or just return.
+        # Given tests use this for mocks, we can just return.
+        pass
+
+    async def notify_new_job(self, queue_name: str) -> None:
+        """In-memory: noop."""
+        pass
