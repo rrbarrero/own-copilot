@@ -49,6 +49,9 @@ class InMemoryDocumentRepo(DocumentRepoProto):
             if doc.repository_id == repository_id
         ]
 
+    async def list_all(self) -> list[Document]:
+        return list(self._documents.values())
+
     async def delete_by_uuids(self, uuids: list[UUID]) -> None:
         for uid in uuids:
             if uid in self._documents:

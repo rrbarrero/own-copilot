@@ -3,9 +3,16 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI
 
-from app.factory import create_chat_with_citations, create_llm
+from app.factory import (
+    create_chat_with_citations,
+    create_document_repo,
+    create_llm,
+    create_repository_repo,
+)
 from app.infra.db import Database
+from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 from app.ingestion.infra.endpoints import router as ingestion_router
+from app.repositories.domain.repository_repo_proto import RepositoryRepoProto
 from app.repositories.infra.endpoints import router as repository_router
 from app.retrieval.application.chat_with_citations import ChatWithCitations
 from app.schemas.chat import ChatRequest, ChatResponse
@@ -40,6 +47,22 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+@app.get("/repositories")
+async def list_repositories(
+    repo: Annotated[RepositoryRepoProto, Depends(create_repository_repo)],
+):
+    repos = await repo.list_all()
+    return [{"id": r.id, "name": r.name, "owner": r.owner} for r in repos]
+
+
+@app.get("/documents")
+async def list_documents(
+    repo: Annotated[DocumentRepoProto, Depends(create_document_repo)],
+):
+    docs = await repo.list_all()
+    return [{"id": d.uuid, "filename": d.filename} for d in docs]
 
 
 @app.post("/chat", response_model=ChatResponse)

@@ -161,6 +161,15 @@ class PostgresDocumentRepo(DocumentRepoProto):
             rows = await cur.fetchall()
             return [document_row_adapter(row) for row in rows]
 
+    async def list_all(self) -> list[Document]:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute("SELECT * FROM documents")
+            rows = await cur.fetchall()
+            return [document_row_adapter(row) for row in rows]
+
     async def get_by_hash(self, content_hash: str) -> Document | None:
         async with (
             self._pool.connection() as conn,

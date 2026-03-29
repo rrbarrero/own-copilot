@@ -45,8 +45,9 @@ addopts = "-m 'not e2e'"
 
 [tool.pyrefly]
 project-includes = [
-    "**/*.py*",
-    "**/*.ipynb",
+    "app/**/*.py",
+    "tests/**/*.py",
+    "scripts/**/*.py",
 ]
 check-unannotated-defs = true
 strict-callable-subtyping = true

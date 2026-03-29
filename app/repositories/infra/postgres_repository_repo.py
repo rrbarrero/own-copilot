@@ -75,6 +75,15 @@ class PostgresRepositoryRepo(RepositoryRepoProto):
             row = await cur.fetchone()
             return self._row_to_entity(row) if row else None
 
+    async def list_all(self) -> list[Repository]:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute("SELECT * FROM repositories")
+            rows = await cur.fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
     def _row_to_entity(self, row: dict) -> Repository:
         return Repository(
             id=UUID(str(row["id"])),
