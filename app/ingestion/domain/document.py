@@ -16,11 +16,11 @@ class DocumentType(Enum):
     CONFIG = "config"
 
 
-class ProcessingStatus(Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    INDEXED = "indexed"
-    FAILED = "failed"
+class DocumentStatus(Enum):
+    QUEUED = "queued"
+    INGESTING = "ingesting"
+    READY = "ready"
+    ERROR = "error"
 
 
 @dataclass
@@ -33,7 +33,7 @@ class Document:
     filename: str
     extension: str
     doc_type: DocumentType
-    processing_status: ProcessingStatus
+    processing_status: DocumentStatus
     size_bytes: int
     created_at: datetime
     updated_at: datetime

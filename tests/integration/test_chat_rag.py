@@ -8,8 +8,8 @@ import pytest_asyncio
 from app.infra.db import Database
 from app.ingestion.domain.document import (
     Document,
+    DocumentStatus,
     DocumentType,
-    ProcessingStatus,
     SourceType,
 )
 from app.ingestion.infra.postgres_chunk_repo import PostgresChunkRepo
@@ -63,7 +63,7 @@ async def test_chat_with_citations_integration(db_pool):
         filename="test.py",
         extension="py",
         doc_type=DocumentType.CODE,
-        processing_status=ProcessingStatus.INDEXED,
+        processing_status=DocumentStatus.READY,
         size_bytes=100,
         repository_id=repo_id,
         content_hash="hash123",

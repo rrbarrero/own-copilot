@@ -2,8 +2,8 @@ from uuid import UUID
 
 from app.ingestion.domain.document import (
     Document,
+    DocumentStatus,
     DocumentType,
-    ProcessingStatus,
     SourceType,
 )
 
@@ -21,7 +21,7 @@ def document_row_adapter(row: dict) -> Document:
         filename=str(row["filename"]),
         extension=str(row["extension"]),
         doc_type=DocumentType(str(row["doc_type"])),
-        processing_status=ProcessingStatus(str(row["processing_status"])),
+        processing_status=DocumentStatus(str(row["processing_status"])),
         size_bytes=int(row["size_bytes"]),
         created_at=row["created_at"],
         updated_at=row["updated_at"],

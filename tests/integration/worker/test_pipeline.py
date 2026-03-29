@@ -5,8 +5,8 @@ import pytest
 
 from app.ingestion.domain.document import (
     Document,
+    DocumentStatus,
     DocumentType,
-    ProcessingStatus,
     SourceType,
 )
 from app.ingestion.infra.in_memory_chunk_repo import InMemoryChunkRepo
@@ -53,7 +53,7 @@ async def test_full_pipeline_success():
         filename="doc.txt",
         extension="txt",
         doc_type=DocumentType.TEXT,
-        processing_status=ProcessingStatus.PENDING,
+        processing_status=DocumentStatus.QUEUED,
         size_bytes=len(content),
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),

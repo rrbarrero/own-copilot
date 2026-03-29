@@ -5,8 +5,8 @@ import pytest
 
 from app.ingestion.domain.document import (
     Document,
+    DocumentStatus,
     DocumentType,
-    ProcessingStatus,
     SourceType,
 )
 from app.ingestion.domain.job import Job, JobStatus
@@ -63,7 +63,7 @@ async def test_worker_persists_last_error_on_failure():
         filename="foo.txt",
         extension="txt",
         doc_type=DocumentType.TEXT,
-        processing_status=ProcessingStatus.PENDING,
+        processing_status=DocumentStatus.QUEUED,
         size_bytes=10,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
@@ -95,7 +95,7 @@ async def test_worker_persists_last_error_on_failure():
     # 4. Assertions on document
     saved_doc = await doc_repo.get_by_uuid(str(doc_id))
     assert saved_doc is not None
-    assert saved_doc.processing_status == ProcessingStatus.FAILED
+    assert saved_doc.processing_status == DocumentStatus.ERROR
     assert saved_doc.last_error == error_msg
 
 
@@ -120,7 +120,7 @@ async def test_worker_updates_document_status_on_success():
         filename="foo.txt",
         extension="txt",
         doc_type=DocumentType.TEXT,
-        processing_status=ProcessingStatus.PENDING,
+        processing_status=DocumentStatus.QUEUED,
         size_bytes=10,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
@@ -150,5 +150,5 @@ async def test_worker_updates_document_status_on_success():
 
     saved_doc = await doc_repo.get_by_uuid(str(doc_id))
     assert saved_doc is not None
-    assert saved_doc.processing_status == ProcessingStatus.INDEXED
+    assert saved_doc.processing_status == DocumentStatus.READY
     assert saved_doc.indexed_at is not None

@@ -3,7 +3,7 @@ import uuid
 import pytest
 
 from app.ingestion.application.ingestion_service import IngestionService
-from app.ingestion.domain.document import ProcessingStatus, SourceType
+from app.ingestion.domain.document import DocumentStatus, SourceType
 from app.ingestion.domain.job import JobStatus
 from app.ingestion.infra.in_memory_document_repo import InMemoryDocumentRepo
 from app.ingestion.infra.in_memory_job_repo import InMemoryJobRepo
@@ -54,7 +54,7 @@ async def test_upload_file_success(ingestion_service, doc_repo, storage_repo, jo
     assert doc is not None
     assert doc.filename == filename
     assert doc.source_type == SourceType.UPLOAD
-    assert doc.processing_status == ProcessingStatus.PENDING
+    assert doc.processing_status == DocumentStatus.QUEUED
     assert doc.upload_batch_id == batch_id
 
     # 2. File stored

@@ -2,7 +2,7 @@ import hashlib
 import uuid
 from datetime import UTC, datetime
 
-from app.ingestion.domain.document import Document, ProcessingStatus, SourceType
+from app.ingestion.domain.document import Document, DocumentStatus, SourceType
 from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 from app.ingestion.domain.file_validator import AllowedExtension, FileValidator
 from app.ingestion.domain.job import Job, JobStatus
@@ -48,7 +48,7 @@ class IngestionService:
             filename=filename,
             extension=ext,
             doc_type=AllowedExtension.get_doc_type(ext),
-            processing_status=ProcessingStatus.PENDING,
+            processing_status=DocumentStatus.QUEUED,
             size_bytes=len(content_bytes),
             created_at=now,
             updated_at=now,

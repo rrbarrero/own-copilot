@@ -2,7 +2,7 @@ import logging
 import uuid
 from datetime import UTC, datetime
 
-from app.ingestion.domain.document import Document, ProcessingStatus, SourceType
+from app.ingestion.domain.document import Document, DocumentStatus, SourceType
 from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 from app.ingestion.domain.job import Job
 from app.ingestion.domain.storage_repo_proto import StorageRepoProto
@@ -102,7 +102,7 @@ class SyncRepositoryJobHandler(JobHandlerProto):
                             filename=scanned_file.filename,
                             extension=scanned_file.extension,
                             doc_type=scanned_file.doc_type,
-                            processing_status=ProcessingStatus.PENDING,
+                            processing_status=DocumentStatus.QUEUED,
                             size_bytes=scanned_file.size_bytes,
                             created_at=datetime.now(UTC),
                             updated_at=datetime.now(UTC),
@@ -118,7 +118,7 @@ class SyncRepositoryJobHandler(JobHandlerProto):
                         doc.size_bytes = scanned_file.size_bytes
                         doc.updated_at = datetime.now(UTC)
                         # Reset to pending for re-indexing
-                        doc.processing_status = ProcessingStatus.PENDING
+                        doc.processing_status = DocumentStatus.QUEUED
                         doc.repository_sync_id = sync.id
 
                     # 6. Materialize snapshot in storage

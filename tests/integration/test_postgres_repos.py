@@ -7,8 +7,8 @@ import pytest
 
 from app.ingestion.domain.document import (
     Document,
+    DocumentStatus,
     DocumentType,
-    ProcessingStatus,
     SourceType,
 )
 from app.ingestion.domain.job import Job, JobStatus
@@ -44,7 +44,7 @@ async def test_postgres_document_repo(db_url):
             filename="test.txt",
             extension="txt",
             doc_type=DocumentType.TEXT,
-            processing_status=ProcessingStatus.PENDING,
+            processing_status=DocumentStatus.QUEUED,
             size_bytes=1024,
             created_at=now,
             updated_at=now,
