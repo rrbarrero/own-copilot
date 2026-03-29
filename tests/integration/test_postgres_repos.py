@@ -12,6 +12,7 @@ from app.ingestion.domain.document import (
     SourceType,
 )
 from app.ingestion.domain.job import Job, JobStatus
+from app.ingestion.infra.postgres_chunk_repo import PostgresChunkRepo
 from app.ingestion.infra.postgres_document_repo import PostgresDocumentRepo
 from app.ingestion.infra.postgres_job_repo import PostgresJobRepo
 
@@ -51,6 +52,8 @@ async def test_postgres_document_repo(db_url):
         )
         await repo.save(doc)
 
+        chunk_repo = PostgresChunkRepo(pool)
+
         # 2. Test Get by UUID
         saved_doc = await repo.get_by_uuid(str(doc_id))
         assert saved_doc is not None
@@ -80,10 +83,10 @@ async def test_postgres_document_repo(db_url):
             },
         ]
 
-        await repo.save_chunks(str(doc_id), chunks)
+        await chunk_repo.save_chunks(str(doc_id), chunks)
 
         # Run twice to test idempotency (should not duplicate)
-        await repo.save_chunks(str(doc_id), chunks)
+        await chunk_repo.save_chunks(str(doc_id), chunks)
 
         # Verify directly via DB
         async with pool.connection() as conn, conn.cursor() as cur:

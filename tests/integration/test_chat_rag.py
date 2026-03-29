@@ -12,6 +12,7 @@ from app.ingestion.domain.document import (
     ProcessingStatus,
     SourceType,
 )
+from app.ingestion.infra.postgres_chunk_repo import PostgresChunkRepo
 from app.ingestion.infra.postgres_document_repo import PostgresDocumentRepo
 from app.repositories.domain.repository import Repository
 from app.repositories.infra.postgres_repository_repo import PostgresRepositoryRepo
@@ -33,6 +34,7 @@ async def db_pool():
 @pytest.mark.asyncio
 async def test_chat_with_citations_integration(db_pool):
     doc_repo = PostgresDocumentRepo(db_pool)
+    chunk_repo = PostgresChunkRepo(db_pool)
     repo_repo = PostgresRepositoryRepo(db_pool)
     retrieval_repo = PostgresRetrievalRepo(db_pool)
 
@@ -74,7 +76,7 @@ async def test_chat_with_citations_integration(db_pool):
     embedding = [0.0] * 1024
     embedding[0] = 1.0
 
-    await doc_repo.save_chunks(
+    await chunk_repo.save_chunks(
         str(doc_uuid),
         [
             {
