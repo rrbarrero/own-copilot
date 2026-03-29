@@ -1,5 +1,5 @@
 from app.config import settings
-from app.core.llm import llm
+from app.core.llm import get_llm
 from app.infra.db import Database
 from app.ingestion.application.ingestion_service import IngestionService
 from app.ingestion.domain.chunk_repo_proto import ChunkRepoProto
@@ -35,7 +35,7 @@ from app.retrieval.infra.postgres_retrieval_repo import PostgresRetrievalRepo
 
 
 def create_llm():
-    return llm
+    return get_llm()
 
 
 def create_document_repo() -> DocumentRepoProto:
