@@ -16,6 +16,7 @@ class PostgresRetrievalRepo:
         query_embedding: list[float],
         scope: ChatScope,
         top_k: int = 5,
+        threshold: float = 0.5,
     ) -> list[RetrievedChunk]:
         async with (
             self._pool.connection() as conn,
@@ -39,9 +40,10 @@ class PostgresRetrievalRepo:
                 JOIN documents d ON d.uuid = dc.document_uuid
                 WHERE 1=1
             """
-            params: dict[str, str | int | list[float]] = {
+            params: dict[str, str | int | float | list[float]] = {
                 "query_embedding": query_embedding,
                 "top_k": top_k,
+                "threshold": threshold,
             }
 
             # Apply scope filters
@@ -51,6 +53,12 @@ class PostgresRetrievalRepo:
             elif scope.type == ScopeType.DOCUMENT:
                 query += " AND d.uuid = %(document_uuid)s"
                 params["document_uuid"] = str(scope.document_id)
+
+            # Apply similarity threshold
+            query += (
+                " AND 1 - (dc.embedding <=> %(query_embedding)s::vector)"
+                " >= %(threshold)s"
+            )
 
             # Order and limit
             query += (

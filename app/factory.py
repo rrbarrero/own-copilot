@@ -106,6 +106,7 @@ def create_retriever():
     return Retriever(
         retrieval_repo=create_retrieval_repo(),
         embedding_service=create_query_embedding_service(),
+        threshold=settings.RETRIEVAL_SIMILARITY_THRESHOLD,
     )
 
 

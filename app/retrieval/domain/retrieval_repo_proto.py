@@ -10,4 +10,5 @@ class RetrievalRepoProto(Protocol):
         query_embedding: list[float],
         scope: ChatScope,
         top_k: int = 5,
+        threshold: float = 0.5,
     ) -> list[RetrievedChunk]: ...
