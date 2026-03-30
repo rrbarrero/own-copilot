@@ -17,6 +17,7 @@ from app.ingestion.infra.endpoints import router as ingestion_router
 from app.repositories.domain.repository_repo_proto import RepositoryRepoProto
 from app.repositories.infra.endpoints import router as repository_router
 from app.schemas.chat import ChatRequest, ChatResponse
+from app.tools.infra.endpoints import router as tools_router
 
 
 @asynccontextmanager
@@ -38,6 +39,7 @@ app = FastAPI(title="Own Copilot API", lifespan=lifespan)
 
 app.include_router(ingestion_router)
 app.include_router(repository_router)
+app.include_router(tools_router)
 
 
 @app.get("/")

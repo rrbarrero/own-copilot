@@ -1,7 +1,6 @@
 from functools import lru_cache
 
 from app.config import settings
-from app.conversation.application.chat_service import ChatService
 from app.conversation.application.question_rewriter import QuestionRewriter
 from app.conversation.domain.conversation_repo_proto import ConversationRepoProto
 from app.conversation.infra.postgres_conversation_repo import (
@@ -40,6 +39,14 @@ from app.retrieval.infra.ollama_query_embedding_service import (
     OllamaQueryEmbeddingService,
 )
 from app.retrieval.infra.postgres_retrieval_repo import PostgresRetrievalRepo
+from app.tools.application.find_files import FindFiles
+from app.tools.application.read_file import ReadFile
+from app.tools.application.repository_tool_service import RepositoryToolService
+from app.tools.application.search_in_repo import SearchInRepo
+from app.tools.application.tool_aware_chat_service import ToolAwareChatService
+from app.tools.infra.filesystem_repository_snapshot_resolver import (
+    FilesystemRepositorySnapshotResolver,
+)
 
 
 @lru_cache
@@ -129,8 +136,28 @@ def create_question_rewriter():
 
 @lru_cache
 def create_chat_service():
-    return ChatService(
+    return ToolAwareChatService(
         conversation_repo=create_conversation_repo(),
         question_rewriter=create_question_rewriter(),
         chat_with_citations=create_chat_with_citations(),
+        tool_service=create_repository_tool_service(),
+        llm=create_llm(),
+    )
+
+
+def create_repository_snapshot_resolver():
+    return FilesystemRepositorySnapshotResolver(
+        repository_repo=create_repository_repo(),
+        sync_repo=create_repository_sync_repo(),
+        storage_path=settings.STORAGE_PATH,
+    )
+
+
+@lru_cache
+def create_repository_tool_service():
+    resolver = create_repository_snapshot_resolver()
+    return RepositoryToolService(
+        find_files=FindFiles(resolver),
+        read_file=ReadFile(resolver),
+        search_in_repo=SearchInRepo(resolver),
     )

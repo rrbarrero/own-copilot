@@ -107,10 +107,7 @@ async def test_full_repo_sync_and_chat_e2e(db_pool_e2e):
         pytest.fail(f"Document indexing timed out after {timeout}s.")
 
     # 4. Perform Chat Request
-    question = (
-        "Where the query is made, the ollama API is called to translate "
-        "the chunks into vectors?"
-    )
+    question = "Explain the responsibility of the IngestionService."
     request = ChatRequest(
         question=question,
         scope=ChatScope(
@@ -138,10 +135,9 @@ async def test_full_repo_sync_and_chat_e2e(db_pool_e2e):
 
     # Core files we expect to see cited given the question
     target_files = [
+        "01-overview.md",
+        "02-architecture.md",
         "factory.py",
-        "ollama_query_embedding_service.py",
-        "ollama_embedding_service.py",
-        "llm.py",
     ]
     found_targets = [f for f in target_files if f in citation_files]
     print(f"Found targeted citations: {found_targets}")

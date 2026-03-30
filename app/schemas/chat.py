@@ -17,10 +17,10 @@ class ChatScope(BaseModel):
 
 class ChatRequest(BaseModel):
     conversation_id: UUID | None = Field(
-        None, description="ID de conversación para follow-ups"
+        None, description="Conversation ID for follow-ups"
     )
-    question: str = Field(..., min_length=1, description="La pregunta del usuario")
-    scope: ChatScope = Field(..., description="El ámbito de la búsqueda")
+    question: str = Field(..., min_length=1, description="The user question")
+    scope: ChatScope = Field(..., description="The search scope")
 
 
 class ChatCitation(BaseModel):
