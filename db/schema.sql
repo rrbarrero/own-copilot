@@ -34,6 +34,35 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: conversation_messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.conversation_messages (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    conversation_id uuid NOT NULL,
+    role character varying(10) NOT NULL,
+    content text NOT NULL,
+    rewritten_question text,
+    citations_json jsonb,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: conversations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.conversations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    scope_type character varying(20) NOT NULL,
+    repository_id uuid,
+    document_id uuid,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
 -- Name: document_chunks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -155,6 +184,22 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: conversation_messages conversation_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conversation_messages
+    ADD CONSTRAINT conversation_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: conversations conversations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conversations
+    ADD CONSTRAINT conversations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: document_chunks document_chunks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -208,6 +253,20 @@ ALTER TABLE ONLY public.repository_syncs
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: idx_conv_messages_conv_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_conv_messages_conv_id ON public.conversation_messages USING btree (conversation_id, created_at);
+
+
+--
+-- Name: idx_conversations_scope; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_conversations_scope ON public.conversations USING btree (scope_type, repository_id, document_id);
 
 
 --
@@ -281,6 +340,30 @@ CREATE INDEX idx_repository_syncs_repo_id_status ON public.repository_syncs USIN
 
 
 --
+-- Name: conversation_messages conversation_messages_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conversation_messages
+    ADD CONSTRAINT conversation_messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: conversations conversations_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conversations
+    ADD CONSTRAINT conversations_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(uuid);
+
+
+--
+-- Name: conversations conversations_repository_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conversations
+    ADD CONSTRAINT conversations_repository_id_fkey FOREIGN KEY (repository_id) REFERENCES public.repositories(id);
+
+
+--
 -- Name: document_chunks document_chunks_document_uuid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -326,4 +409,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260329095838'),
     ('20260329105900'),
     ('20260329110800'),
-    ('20260329114100');
+    ('20260329114100'),
+    ('20260330074716');

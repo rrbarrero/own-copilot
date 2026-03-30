@@ -1,6 +1,12 @@
 from functools import lru_cache
 
 from app.config import settings
+from app.conversation.application.chat_service import ChatService
+from app.conversation.application.question_rewriter import QuestionRewriter
+from app.conversation.domain.conversation_repo_proto import ConversationRepoProto
+from app.conversation.infra.postgres_conversation_repo import (
+    PostgresConversationRepo,
+)
 from app.core.llm import get_llm
 from app.infra.db import Database
 from app.ingestion.application.ingestion_service import IngestionService
@@ -108,4 +114,22 @@ def create_chat_with_citations():
     return ChatWithCitations(
         retriever=create_retriever(),
         llm=create_llm(),
+    )
+
+
+def create_conversation_repo() -> ConversationRepoProto:
+    return PostgresConversationRepo(Database.get_pool())
+
+
+@lru_cache
+def create_question_rewriter():
+    return QuestionRewriter(llm=create_llm())
+
+
+@lru_cache
+def create_chat_service():
+    return ChatService(
+        conversation_repo=create_conversation_repo(),
+        question_rewriter=create_question_rewriter(),
+        chat_with_citations=create_chat_with_citations(),
     )

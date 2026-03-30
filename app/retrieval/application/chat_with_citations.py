@@ -1,9 +1,15 @@
+from uuid import UUID
+
 from langchain_ollama import ChatOllama
 
 from app.prompts.rag_prompt import RAG_PROMPT_TEMPLATE
 from app.retrieval.application.context_builder import ContextBuilder
 from app.retrieval.application.retriever import Retriever
 from app.schemas.chat import ChatRequest, ChatResponse
+
+# Sentinel UUID used by ChatWithCitations: ChatService always overwrites this
+# with the real conversation_id before returning to the caller.
+_NO_CONVERSATION_ID = UUID(int=0)
 
 
 class ChatWithCitations:
@@ -44,6 +50,7 @@ class ChatWithCitations:
         answer = str(response.content)
 
         return ChatResponse(
+            conversation_id=_NO_CONVERSATION_ID,
             answer=answer,
             citations=citations,
         )

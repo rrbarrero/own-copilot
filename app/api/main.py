@@ -3,7 +3,9 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI
 
+from app.conversation.application.chat_service import ChatService
 from app.factory import (
+    create_chat_service,
     create_chat_with_citations,
     create_document_repo,
     create_llm,
@@ -14,7 +16,6 @@ from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 from app.ingestion.infra.endpoints import router as ingestion_router
 from app.repositories.domain.repository_repo_proto import RepositoryRepoProto
 from app.repositories.infra.endpoints import router as repository_router
-from app.retrieval.application.chat_with_citations import ChatWithCitations
 from app.schemas.chat import ChatRequest, ChatResponse
 
 
@@ -68,6 +69,6 @@ async def list_documents(
 @app.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
-    service: Annotated[ChatWithCitations, Depends(create_chat_with_citations)],
+    service: Annotated[ChatService, Depends(create_chat_service)],
 ):
     return await service.chat(request)

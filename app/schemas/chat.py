@@ -16,6 +16,9 @@ class ChatScope(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    conversation_id: UUID | None = Field(
+        None, description="ID de conversación para follow-ups"
+    )
     question: str = Field(..., min_length=1, description="La pregunta del usuario")
     scope: ChatScope = Field(..., description="El ámbito de la búsqueda")
 
@@ -28,5 +31,6 @@ class ChatCitation(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    conversation_id: UUID
     answer: str
     citations: list[ChatCitation] = Field(default_factory=list)

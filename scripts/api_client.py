@@ -1,12 +1,25 @@
 import json
 import uuid
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 import typer
 
 app = typer.Typer(help="CLI client for testing Own Copilot API.")
+
+# Local file to persist the last conversation ID for a seamless experience
+LAST_CONV_FILE = Path(".last_conversation_id")
+
+
+def get_last_conversation_id() -> str | None:
+    if LAST_CONV_FILE.exists():
+        return LAST_CONV_FILE.read_text().strip()
+    return None
+
+
+def save_last_conversation_id(conv_id: str):
+    LAST_CONV_FILE.write_text(str(conv_id))
 
 
 @app.command()
@@ -44,11 +57,6 @@ def upload(
 
             if response.status_code == 200:
                 typer.secho("\nOK: Upload successful.", fg=typer.colors.GREEN)
-                # Test idempotency
-                typer.echo("\nTesting idempotency (re-sending same key)...")
-                response2 = client.post(full_url, headers=headers, files=upload_files)
-                typer.echo(f"Status (Retried): {response2.status_code}")
-                typer.echo(json.dumps(response2.json(), indent=2))
             else:
                 typer.secho("\nERROR: Upload failed.", fg=typer.colors.RED)
 
@@ -87,17 +95,68 @@ def sync_repo(
         typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
 
 
+def _do_chat(
+    client: httpx.Client,
+    full_url: str,
+    question: str,
+    scope: dict[str, Any],
+    conv_id: str | None,
+) -> str | None:
+    payload = {
+        "question": question,
+        "scope": scope,
+        "conversation_id": conv_id,
+    }
+
+    response = client.post(full_url, json=payload)
+
+    if response.status_code == 200:
+        data = response.json()
+        new_id = data.get("conversation_id")
+        if new_id:
+            save_last_conversation_id(new_id)
+
+        typer.secho("\nAnswer:", fg=typer.colors.BLUE, bold=True)
+        typer.echo(data["answer"])
+
+        if data.get("citations"):
+            typer.secho("\nCitations:", fg=typer.colors.YELLOW)
+            for cite in data["citations"]:
+                # Multi-line string to satisfy Ruff E501
+                msg = (
+                    f"- {cite.get('filename')} "
+                    f"(chunk {cite.get('chunk_index')}) in {cite.get('path')}"
+                )
+                typer.echo(msg)
+        return new_id
+
+    # Breaking long line to satisfy Ruff E501
+    err_msg = f"\nERROR ({response.status_code}): {response.text}"
+    typer.secho(err_msg, fg=typer.colors.RED)
+    return None
+
+
 @app.command()
 def chat(
     question: Annotated[str, typer.Argument(help="Your question for the copilot")],
     repo_id: Annotated[str | None, typer.Option(help="Filter by repository ID")] = None,
     doc_id: Annotated[str | None, typer.Option(help="Filter by document ID")] = None,
+    conv_id: Annotated[
+        str | None, typer.Option(help="Specific conversation ID")
+    ] = None,
+    new: Annotated[
+        bool, typer.Option("--new", help="Start a new conversation")
+    ] = False,
     url: Annotated[str, typer.Option(help="API Base URL")] = "http://localhost:8000",
 ):
     """
-    Query the chatbot with a question and a specific scope.
+    Query the chatbot with a question. History is tracked automatically.
     """
     full_url = f"{url.rstrip('/')}/chat"
+
+    # Use specified conv_id, or persisted last one, unless --new is set
+    last_id = get_last_conversation_id()
+    effective_conv_id = conv_id if conv_id else (None if new else last_id)
 
     # Determine scope
     if doc_id:
@@ -106,43 +165,55 @@ def chat(
         scope = {"type": "repository", "repository_id": repo_id}
     else:
         typer.secho(
-            "Error: You must provide either --repo-id or --doc-id to set a scope.",
-            fg=typer.colors.RED,
+            "Error: Scope required (use --repo-id or --doc-id).", fg=typer.colors.RED
         )
         raise typer.Exit(code=1)
 
-    payload = {
-        "question": question,
-        "scope": scope,
-    }
-
-    typer.echo(f"Asking: '{question}' (Scope: {scope['type']})")
-
     try:
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(full_url, json=payload)
-
-            typer.echo(f"Status: {response.status_code}")
-            if response.status_code == 200:
-                data = response.json()
-                typer.secho("\nAnswer:", fg=typer.colors.BLUE, bold=True)
-                typer.echo(data["answer"])
-
-                if data.get("citations"):
-                    typer.secho("\nCitations:", fg=typer.colors.YELLOW)
-                    for cite in data["citations"]:
-                        path = cite["path"]
-                        fname = cite["filename"]
-                        idx = cite["chunk_index"]
-                        msg = f"- {fname} (chunk {idx}) in {path}"
-                        typer.echo(msg)
-            else:
-                typer.echo("Response Body:")
-                typer.echo(json.dumps(response.json(), indent=2))
-                typer.secho("\nERROR: Chat request failed.", fg=typer.colors.RED)
-
+        with httpx.Client(timeout=60.0) as client:
+            _do_chat(client, full_url, question, scope, effective_conv_id)
     except Exception as e:
         typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
+
+
+@app.command()
+def repl(
+    repo_id: Annotated[str | None, typer.Option(help="Filter by repository ID")] = None,
+    doc_id: Annotated[str | None, typer.Option(help="Filter by document ID")] = None,
+    url: Annotated[str, typer.Option(help="API Base URL")] = "http://localhost:8000",
+):
+    """
+    Interactive chat session (REPL mode).
+    """
+    full_url = f"{url.rstrip('/')}/chat"
+
+    if not repo_id and not doc_id:
+        typer.secho(
+            "Error: You must provide --repo-id or --doc-id to start.",
+            fg=typer.colors.RED,
+        )
+        return
+
+    scope = (
+        {"type": "document", "document_id": doc_id}
+        if doc_id
+        else {"type": "repository", "repository_id": repo_id}
+    )
+    conv_id = None
+
+    typer.secho(
+        "--- Entering Interactive Mode (type 'exit' or 'quit' to stop) ---",
+        fg=typer.colors.MAGENTA,
+    )
+
+    with httpx.Client(timeout=60.0) as client:
+        while True:
+            question = typer.prompt("Copilot >>")
+            if question.lower() in ["exit", "quit"]:
+                break
+
+            conv_id = _do_chat(client, full_url, question, scope, conv_id)
+            typer.echo("-" * 40)
 
 
 @app.command()

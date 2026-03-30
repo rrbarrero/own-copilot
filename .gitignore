@@ -13,3 +13,5 @@ wheels/
 
 .env
 storage
+.codex
+.last_conversation_id
