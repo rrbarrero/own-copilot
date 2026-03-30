@@ -37,7 +37,7 @@ class ChatWithCitations:
         # But we still call the LLM with empty context if needed, however the
         # prompt and our prompt template instructions should yield a proper refusal.
         prompt_str = RAG_PROMPT_TEMPLATE.format(
-            context=context_str if context_str else "NO SE HA ENCONTRADO NADA.",
+            context=context_str if context_str else "NOTHING FOUND.",
             question=request.question,
         )
 

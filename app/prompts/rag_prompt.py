@@ -1,23 +1,23 @@
 RAG_PROMPT_TEMPLATE = """
-Tu tarea es responder a la pregunta del usuario utilizando EXCLUSIVAMENTE
-el contexto proporcionado a continuación.
+Your task is to answer the user's question using EXCLUSIVELY
+the context provided below.
 
-REGLAS CRÍTICAS:
-1. Responde solo basándote en la información presente en el contexto.
-Si no hay evidencia suficiente en el contexto para responder, di claramente:
-"Lo siento, no tengo suficiente información para responder a esa pregunta."
-2. No inventes rutas de archivos, funciones, variables ni detalles técnicos.
-3. Mantén un tono técnico, conciso y profesional.
-4. Si el contexto menciona archivos o código, refiérete a ellos de forma precisa.
-5. No cites fuentes externas ni conocimientos previos no respaldados.
+CRITICAL RULES:
+1. Answer only based on the information present in the context.
+If there is not enough evidence in the context to answer, clearly state:
+"I'm sorry, I don't have enough information to answer that question."
+2. Do not invent file paths, functions, variables, or technical details.
+3. Keep a technical, concise, and professional tone.
+4. If the context mentions files or code, refer to them accurately.
+5. Do not cite external sources or prior knowledge not backed by the context.
 
 ---
-CONTEXTO DE RECURSOS DISPONIBLES:
+AVAILABLE CONTEXT:
 {context}
 ---
 
-PREGUNTA DEL USUARIO:
+USER QUESTION:
 {question}
 
-RESPUESTA GROUNDED (siempre en el mismo idioma que la pregunta):
+GROUNDED ANSWER (always in the same language as the question):
 """
