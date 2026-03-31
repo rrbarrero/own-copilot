@@ -1,9 +1,15 @@
-.PHONY: test test-all dev check migrate migrate-new migrate-status uv-add
+.PHONY: test test-all dev check migrate migrate-new migrate-status uv-add prep
+
+prep:
+	docker compose up -d db worker
+	docker compose run --rm dbmate up
 
 test:
+	docker compose up -d db
+	docker compose run --rm dbmate up
 	docker compose run -e TESTING=true --rm app pytest
 
-test-all:
+test-all: prep
 	docker compose run -e TESTING=true --rm app pytest -m ""
 
 dev:

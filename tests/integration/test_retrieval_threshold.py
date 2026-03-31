@@ -128,3 +128,80 @@ async def test_retrieval_threshold_logic(db_pool):
     )
     results_diff = await retriever_diff.retrieve("test", scope)
     assert len(results_diff) == 0
+
+
+@pytest.mark.asyncio
+async def test_retrieval_falls_back_to_lower_threshold_when_primary_returns_nothing(
+    db_pool,
+):
+    doc_repo = PostgresDocumentRepo(db_pool)
+    chunk_repo = PostgresChunkRepo(db_pool)
+    repo_repo = PostgresRepositoryRepo(db_pool)
+    retrieval_repo = PostgresRetrievalRepo(db_pool)
+
+    repo_id = uuid4()
+    repository = Repository(
+        id=repo_id,
+        provider="github",
+        clone_url="https://github.com/test/fallback",
+        normalized_clone_url="github.com/test/fallback",
+        owner="test",
+        name="fallback",
+        local_path="/tmp/fallback",
+        is_active=True,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    )
+    await repo_repo.save(repository)
+
+    doc_uuid = uuid4()
+    document = Document(
+        uuid=doc_uuid,
+        source_type=SourceType.UPLOAD,
+        source_id="fallback.py",
+        path="tests/fallback.py",
+        filename="fallback.py",
+        extension="py",
+        doc_type=DocumentType.CODE,
+        processing_status=DocumentStatus.READY,
+        size_bytes=100,
+        repository_id=repo_id,
+        content_hash="fallback_hash",
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    )
+    await doc_repo.save(document)
+
+    embedding = [0.0] * 1024
+    embedding[0] = 1.0
+
+    await chunk_repo.save_chunks(
+        str(doc_uuid),
+        [
+            {
+                "chunk_index": 0,
+                "content": "Fallback retrieval should still find this chunk.",
+                "embedding": embedding,
+                "metadata": {"foo": "bar"},
+            }
+        ],
+    )
+
+    scope = ChatScope(
+        type=ScopeType.REPOSITORY,
+        repository_id=repo_id,
+    )
+
+    mock_embedding_service = MagicMock()
+    mock_embedding_service.get_embedding = AsyncMock(return_value=embedding)
+
+    retriever = Retriever(
+        retrieval_repo=retrieval_repo,
+        embedding_service=mock_embedding_service,
+        threshold=1.1,
+        fallback_threshold=0.1,
+    )
+
+    results = await retriever.retrieve("test", scope)
+    assert len(results) == 1
+    assert results[0].content == "Fallback retrieval should still find this chunk."

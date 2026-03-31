@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -19,19 +20,29 @@ from app.repositories.infra.endpoints import router as repository_router
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.tools.infra.endpoints import router as tools_router
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logging.getLogger("app").setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Startup: open the pool
+    logger.info("api.startup opening database pool")
     pool = Database.get_pool()
     await pool.open()
 
     # Proactive LLM & Chat service initialization (early warming)
     create_llm()
     create_chat_with_citations()
+    logger.info("api.startup services warmed")
 
     yield
     # Shutdown: close the pool
+    logger.info("api.shutdown closing database pool")
     await Database.close()
 
 
@@ -73,4 +84,19 @@ async def chat(
     request: ChatRequest,
     service: Annotated[ChatService, Depends(create_chat_service)],
 ):
-    return await service.chat(request)
+    logger.info(
+        "api.chat.request scope_type=%s repository_id=%s document_id=%s conversation_id=%s question=%r",
+        request.scope.type,
+        request.scope.repository_id,
+        request.scope.document_id,
+        request.conversation_id,
+        request.question,
+    )
+    response = await service.chat(request)
+    logger.info(
+        "api.chat.response conversation_id=%s citations=%s answer_preview=%r",
+        response.conversation_id,
+        len(response.citations),
+        response.answer[:200],
+    )
+    return response

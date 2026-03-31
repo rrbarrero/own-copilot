@@ -147,7 +147,7 @@ async def test_full_repo_sync_and_chat_e2e(db_pool_e2e):
 
     # 6. Verify "I don't know" handling
     out_of_context_question = (
-        "What is the capital of France and what is the weather there?"
+        "What is the primary ingredient of a traditional Japanese sushi?"
     )
     print(f"\nSending out-of-context request: {out_of_context_question}")
 

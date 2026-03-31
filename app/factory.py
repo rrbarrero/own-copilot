@@ -1,5 +1,24 @@
 from functools import lru_cache
 
+from app.agentic.application.graph_chat_service import GraphChatService
+from app.agentic.application.nodes.answer_from_context import (
+    AnswerFromContextNode,
+)
+from app.agentic.application.nodes.decide_next_action import (
+    DecideNextActionNode,
+)
+from app.agentic.application.nodes.evaluate_evidence import (
+    EvaluateEvidenceNode,
+)
+from app.agentic.application.nodes.rewrite_question import RewriteQuestionNode
+from app.agentic.application.nodes.run_find_files import RunFindFilesNode
+from app.agentic.application.nodes.run_rag import RunRagNode
+from app.agentic.application.nodes.run_read_file import RunReadFileNode
+from app.agentic.application.nodes.run_search_in_repo import (
+    RunSearchInRepoNode,
+)
+from app.agentic.application.nodes.stop_no_evidence import StopNoEvidenceNode
+from app.agentic.infra.langgraph_builder import LangGraphBuilder
 from app.config import settings
 from app.conversation.application.question_rewriter import QuestionRewriter
 from app.conversation.domain.conversation_repo_proto import ConversationRepoProto
@@ -43,7 +62,6 @@ from app.tools.application.find_files import FindFiles
 from app.tools.application.read_file import ReadFile
 from app.tools.application.repository_tool_service import RepositoryToolService
 from app.tools.application.search_in_repo import SearchInRepo
-from app.tools.application.tool_aware_chat_service import ToolAwareChatService
 from app.tools.infra.filesystem_repository_snapshot_resolver import (
     FilesystemRepositorySnapshotResolver,
 )
@@ -114,6 +132,7 @@ def create_retriever():
         retrieval_repo=create_retrieval_repo(),
         embedding_service=create_query_embedding_service(),
         threshold=settings.RETRIEVAL_SIMILARITY_THRESHOLD,
+        fallback_threshold=settings.RETRIEVAL_FALLBACK_THRESHOLD,
     )
 
 
@@ -135,13 +154,30 @@ def create_question_rewriter():
 
 
 @lru_cache
+def create_langgraph():
+    llm = create_llm()
+    tool_service = create_repository_tool_service()
+
+    builder = LangGraphBuilder(
+        rewrite_node=RewriteQuestionNode(create_question_rewriter()),
+        decide_node=DecideNextActionNode(llm),
+        rag_node=RunRagNode(create_retriever()),
+        find_files_node=RunFindFilesNode(tool_service),
+        read_file_node=RunReadFileNode(tool_service),
+        search_in_repo_node=RunSearchInRepoNode(tool_service),
+        evaluate_node=EvaluateEvidenceNode(),
+        answer_node=AnswerFromContextNode(llm),
+        stop_no_evidence_node=StopNoEvidenceNode(),
+    )
+    return builder.build()
+
+
+@lru_cache
 def create_chat_service():
-    return ToolAwareChatService(
+    return GraphChatService(
         conversation_repo=create_conversation_repo(),
-        question_rewriter=create_question_rewriter(),
-        chat_with_citations=create_chat_with_citations(),
-        tool_service=create_repository_tool_service(),
-        llm=create_llm(),
+        graph=create_langgraph(),
+        history_limit=settings.CONVERSATION_HISTORY_LIMIT,
     )
 
 
