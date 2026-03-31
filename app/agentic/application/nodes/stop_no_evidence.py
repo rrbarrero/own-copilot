@@ -9,8 +9,9 @@ class StopNoEvidenceNode:
     """
     Handles cases where no sufficient evidence was found in the graph.
     """
+
     def __init__(self):
-         pass
+        pass
 
     async def __call__(self, state: AgentGraphState) -> dict:
         """

@@ -27,12 +27,11 @@ class AnswerFromContextNode:
         if retrieved.strip():
             context += "--- RAG CONTEXT ---\n" + retrieved + "\n\n"
         if tool_ctx.strip():
-            context += (
-                "--- DETERMINISTIC TOOL CONTEXT ---\n" + tool_ctx + "\n\n"
-            )
+            context += "--- DETERMINISTIC TOOL CONTEXT ---\n" + tool_ctx + "\n\n"
 
         logger.info(
-            "graph_node.answer conversation_id=%s has_rag_context=%s has_tool_context=%s citations=%s",
+            "graph_node.answer conversation_id=%s has_rag_context=%s "
+            "has_tool_context=%s citations=%s",
             state["conversation_id"],
             bool(retrieved.strip()),
             bool(tool_ctx.strip()),
@@ -41,12 +40,14 @@ class AnswerFromContextNode:
 
         if not context.strip():
             logger.info(
-                "graph_node.answer.done conversation_id=%s result=deterministic_refusal",
+                "graph_node.answer.done conversation_id=%s "
+                "result=deterministic_refusal",
                 state["conversation_id"],
             )
             return {
                 "answer": (
-                    "I'm sorry, I don't have enough information to answer that question."
+                    "I'm sorry, I don't have enough information "
+                    "to answer that question."
                 ),
                 "reasoning_trace": state["reasoning_trace"]
                 + ["No evidence available. Returned deterministic refusal."],

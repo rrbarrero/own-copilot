@@ -43,23 +43,23 @@ class LangGraphBuilder:
         """
         Assembles the LangGraph.
         """
-        workflow = StateGraph(AgentGraphState)
-        
+        workflow = StateGraph(AgentGraphState)  # type: ignore
+
         # Add nodes
-        workflow.add_node("rewrite", self._rewrite)
-        workflow.add_node("decide", self._decide)
-        workflow.add_node("rag", self._rag)
-        workflow.add_node("find_files", self._find_files)
-        workflow.add_node("read_file", self._read_file)
-        workflow.add_node("search_in_repo", self._search_in_repo)
-        workflow.add_node("evaluate", self._evaluate)
-        workflow.add_node("answer", self._answer)
-        workflow.add_node("stop_no_evidence", self._stop_no_evidence)
-        
+        workflow.add_node("rewrite", self._rewrite)  # type: ignore
+        workflow.add_node("decide", self._decide)  # type: ignore
+        workflow.add_node("rag", self._rag)  # type: ignore
+        workflow.add_node("find_files", self._find_files)  # type: ignore
+        workflow.add_node("read_file", self._read_file)  # type: ignore
+        workflow.add_node("search_in_repo", self._search_in_repo)  # type: ignore
+        workflow.add_node("evaluate", self._evaluate)  # type: ignore
+        workflow.add_node("answer", self._answer)  # type: ignore
+        workflow.add_node("stop_no_evidence", self._stop_no_evidence)  # type: ignore
+
         # Define edges
         workflow.add_edge(START, "rewrite")
         workflow.add_edge("rewrite", "decide")
-        
+
         # Routing from Decide
         def route_after_decide(state: AgentGraphState):
             strategy = state["current_strategy"]
@@ -78,7 +78,7 @@ class LangGraphBuilder:
             ]:
                 return strategy
             return "answer"
-            
+
         workflow.add_conditional_edges(
             "decide",
             route_after_decide,
@@ -89,20 +89,21 @@ class LangGraphBuilder:
                 "search_in_repo": "search_in_repo",
                 "answer": "answer",
                 "stop_no_evidence": "stop_no_evidence",
-            }
+            },
         )
-        
+
         # All actions go to evaluate
         workflow.add_edge("rag", "evaluate")
         workflow.add_edge("find_files", "evaluate")
         workflow.add_edge("read_file", "evaluate")
         workflow.add_edge("search_in_repo", "evaluate")
-        
+
         # Evaluate goes back to decide or completes with answer
         def route_after_evaluate(state: AgentGraphState):
             destination = "answer" if state.get("done", False) else "decide"
             logger.info(
-                "graph_route.after_evaluate conversation_id=%s done=%s next=%s step_count=%s",
+                "graph_route.after_evaluate conversation_id=%s done=%s "
+                "next=%s step_count=%s",
                 state["conversation_id"],
                 state.get("done", False),
                 destination,
@@ -111,16 +112,11 @@ class LangGraphBuilder:
             if state.get("done", False):
                 return "answer"
             return "decide"
-            
+
         workflow.add_conditional_edges(
-            "evaluate",
-            route_after_evaluate,
-            {
-                "decide": "decide",
-                "answer": "answer"
-            }
+            "evaluate", route_after_evaluate, {"decide": "decide", "answer": "answer"}
         )
-        
+
         # Final answer goes to end
         workflow.add_edge("answer", END)
         workflow.add_edge("stop_no_evidence", END)

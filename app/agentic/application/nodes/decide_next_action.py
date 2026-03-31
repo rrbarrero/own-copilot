@@ -14,7 +14,7 @@ class DecideNextActionNode:
     Decides the next action to take based on the current state.
     This replaces part of the ToolPicker functionality with a graph-compatible node.
     """
-    
+
     SYSTEM_PROMPT = (
         "You are an orchestrator for a technical assistant. "
         "Decide the best next action to answer the user question.\n\n"
@@ -44,7 +44,8 @@ class DecideNextActionNode:
         previous_strategies = [tc["strategy"] for tc in state["tool_calls"]]
 
         logger.info(
-            "graph_node.decide conversation_id=%s step_count=%s has_context=%s previous_strategies=%s",
+            "graph_node.decide conversation_id=%s step_count=%s has_context=%s "
+            "previous_strategies=%s",
             state["conversation_id"],
             state["step_count"],
             has_context,
@@ -53,7 +54,8 @@ class DecideNextActionNode:
 
         if not has_context and not previous_strategies:
             logger.info(
-                "graph_node.decide.result conversation_id=%s strategy=rag reason=no_evidence_yet",
+                "graph_node.decide.result conversation_id=%s strategy=rag "
+                "reason=no_evidence_yet",
                 state["conversation_id"],
             )
             return {
@@ -67,7 +69,8 @@ class DecideNextActionNode:
 
         if not has_context and "rag" in previous_strategies:
             logger.info(
-                "graph_node.decide.result conversation_id=%s strategy=stop_no_evidence reason=rag_without_evidence",
+                "graph_node.decide.result conversation_id=%s "
+                "strategy=stop_no_evidence reason=rag_without_evidence",
                 state["conversation_id"],
             )
             return {
@@ -78,7 +81,8 @@ class DecideNextActionNode:
 
         if has_context:
             logger.info(
-                "graph_node.decide.result conversation_id=%s strategy=answer reason=context_already_available",
+                "graph_node.decide.result conversation_id=%s strategy=answer "
+                "reason=context_already_available",
                 state["conversation_id"],
             )
             return {
@@ -89,7 +93,8 @@ class DecideNextActionNode:
 
         if state["step_count"] >= self._max_steps:
             logger.info(
-                "graph_node.decide.result conversation_id=%s strategy=answer reason=max_steps_reached",
+                "graph_node.decide.result conversation_id=%s strategy=answer "
+                "reason=max_steps_reached",
                 state["conversation_id"],
             )
             return {
@@ -120,16 +125,16 @@ class DecideNextActionNode:
 
         messages = [
             SystemMessage(content=self.SYSTEM_PROMPT),
-            HumanMessage(content=prompt)
+            HumanMessage(content=prompt),
         ]
-        
+
         response = await self._llm.ainvoke(messages)
         content = str(response.content).strip()
-        
+
         # Clean JSON if necessary
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0].strip()
-        
+
         try:
             data = json.loads(content)
             strategy = data.get("strategy", "rag")
@@ -141,7 +146,8 @@ class DecideNextActionNode:
             reasoning = "Failed to parse LLM decision, defaulting to RAG."
 
         logger.info(
-            "graph_node.decide.result conversation_id=%s strategy=%s parameters=%s reasoning=%r",
+            "graph_node.decide.result conversation_id=%s strategy=%s "
+            "parameters=%s reasoning=%r",
             state["conversation_id"],
             strategy,
             params,

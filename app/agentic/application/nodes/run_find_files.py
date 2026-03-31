@@ -10,6 +10,7 @@ class RunFindFilesNode:
     """
     Executes a find_files search over the repository snapshot.
     """
+
     def __init__(self, tool_service: RepositoryToolService):
         self._tool_service = tool_service
 
@@ -21,7 +22,8 @@ class RunFindFilesNode:
         limit = params.get("limit", 10)
 
         logger.info(
-            "graph_node.find_files conversation_id=%s repository_id=%s query=%r extensions=%s limit=%s",
+            "graph_node.find_files conversation_id=%s repository_id=%s "
+            "query=%r extensions=%s limit=%s",
             state["conversation_id"],
             state["scope"].repository_id,
             query,

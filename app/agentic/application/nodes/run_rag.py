@@ -10,6 +10,7 @@ class RunRagNode:
     """
     Executes a semantic retrieval (RAG) to gather context.
     """
+
     def __init__(self, retriever: Retriever):
         self._retriever = retriever
 
@@ -31,7 +32,7 @@ class RunRagNode:
         citations = state["citations"][:]  # Clone list
 
         for i, chunk in enumerate(chunks):
-            context_items.append(f"[{i+1}] {chunk.content}")
+            context_items.append(f"[{i + 1}] {chunk.content}")
             citations.append(
                 {
                     "document_id": chunk.document_uuid,
@@ -41,11 +42,7 @@ class RunRagNode:
                 }
             )
 
-        retrieved_context = (
-            "\n\n".join(context_items)
-            if context_items
-            else ""
-        )
+        retrieved_context = "\n\n".join(context_items) if context_items else ""
 
         logger.info(
             "graph_node.run_rag.done conversation_id=%s chunks=%s citations=%s",

@@ -20,6 +20,8 @@ check:
 	docker compose run --rm app ruff format --no-cache --check .
 	docker compose run --rm app pyrefly check
 
+validate: test-all check
+
 migrate:
 	docker compose run --rm dbmate up
 

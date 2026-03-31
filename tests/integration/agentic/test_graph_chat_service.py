@@ -43,6 +43,7 @@ async def test_graph_chat_service_logic():
     mock_llm.ainvoke.side_effect = [m_final_ans]
 
     from uuid import uuid4
+
     mock_retriever = AsyncMock()
     # Return matched context as a real object or mock with real primitives
     chunk = MagicMock()
@@ -51,7 +52,7 @@ async def test_graph_chat_service_logic():
     chunk.document_uuid = uuid4()
     chunk.path = "src/test.py"
     chunk.chunk_index = 0
-    
+
     mock_retriever.retrieve.return_value = [chunk]
 
     mock_tool_service = MagicMock()

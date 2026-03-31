@@ -15,14 +15,14 @@ class RewriteQuestionNode:
         Rewrites the original question into a standalone version based on history.
         """
         logger.info(
-            "graph_node.rewrite conversation_id=%s history_messages=%s original_question=%r",
+            "graph_node.rewrite conversation_id=%s history_messages=%s "
+            "original_question=%r",
             state["conversation_id"],
             len(state["history"]),
             state["original_question"],
         )
         rewritten = await self._rewriter.rewrite(
-            question=state["original_question"],
-            history=state["history"]
+            question=state["original_question"], history=state["history"]
         )
 
         logger.info(
@@ -33,5 +33,5 @@ class RewriteQuestionNode:
 
         return {
             "rewritten_question": rewritten,
-            "reasoning_trace": state["reasoning_trace"] + ["Question rewritten."]
+            "reasoning_trace": state["reasoning_trace"] + ["Question rewritten."],
         }

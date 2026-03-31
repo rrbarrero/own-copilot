@@ -10,6 +10,7 @@ class RunReadFileNode:
     """
     Executes a read_file operation to inspect the content of a specific file.
     """
+
     def __init__(self, tool_service: RepositoryToolService):
         self._tool_service = tool_service
 
@@ -41,7 +42,8 @@ class RunReadFileNode:
             if len(tool_output) > 8000:
                 tool_output = tool_output[:8000] + "\n\n[CONTENT TRUNCATED]"
             logger.info(
-                "graph_node.read_file.done conversation_id=%s path=%r size_bytes=%s truncated=%s",
+                "graph_node.read_file.done conversation_id=%s path=%r "
+                "size_bytes=%s truncated=%s",
                 state["conversation_id"],
                 read_res.path,
                 read_res.size_bytes,

@@ -45,7 +45,8 @@ class Retriever:
             return results
 
         logger.info(
-            "retriever.fallback_retry scope_type=%s repository_id=%s document_id=%s primary_threshold=%s fallback_threshold=%s question=%r",
+            "retriever.fallback_retry scope_type=%s repository_id=%s "
+            "document_id=%s primary_threshold=%s fallback_threshold=%s question=%r",
             scope.type,
             scope.repository_id,
             scope.document_id,

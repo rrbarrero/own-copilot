@@ -85,7 +85,8 @@ async def chat(
     service: Annotated[ChatService, Depends(create_chat_service)],
 ):
     logger.info(
-        "api.chat.request scope_type=%s repository_id=%s document_id=%s conversation_id=%s question=%r",
+        "api.chat.request scope_type=%s repository_id=%s document_id=%s "
+        "conversation_id=%s question=%r",
         request.scope.type,
         request.scope.repository_id,
         request.scope.document_id,

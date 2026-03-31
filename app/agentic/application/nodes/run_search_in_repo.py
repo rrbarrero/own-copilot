@@ -22,7 +22,8 @@ class RunSearchInRepoNode:
         limit = params.get("limit", 10)
 
         logger.info(
-            "graph_node.search_in_repo conversation_id=%s repository_id=%s query=%r extensions=%s limit=%s",
+            "graph_node.search_in_repo conversation_id=%s repository_id=%s "
+            "query=%r extensions=%s limit=%s",
             state["conversation_id"],
             state["scope"].repository_id,
             query,

@@ -1,4 +1,3 @@
-
 import logging
 
 from langchain_core.runnables import Runnable
@@ -56,7 +55,8 @@ class GraphChatService(ChatService):
         }
 
         logger.info(
-            "graph_chat.start conversation_id=%s scope_type=%s repository_id=%s document_id=%s question=%r",
+            "graph_chat.start conversation_id=%s scope_type=%s repository_id=%s "
+            "document_id=%s question=%r",
             conversation.id,
             request.scope.type,
             request.scope.repository_id,
@@ -71,7 +71,8 @@ class GraphChatService(ChatService):
         rewritten = result.get("rewritten_question")
 
         logger.info(
-            "graph_chat.end conversation_id=%s strategy=%s step_count=%s citations=%s answer_preview=%r reasoning_trace=%s",
+            "graph_chat.end conversation_id=%s strategy=%s step_count=%s "
+            "citations=%s answer_preview=%r reasoning_trace=%s",
             conversation.id,
             result.get("current_strategy"),
             result.get("step_count"),
