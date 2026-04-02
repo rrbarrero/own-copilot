@@ -37,3 +37,8 @@ class LoadDocumentStep(StepProto):
         ctx.repository_sync_id = (
             str(doc.repository_sync_id) if doc.repository_sync_id else None
         )
+
+        ctx.filename = doc.filename
+        ctx.extension = doc.extension
+        ctx.doc_type = doc.doc_type.value if doc.doc_type else None
+        ctx.language = doc.language

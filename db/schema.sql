@@ -87,7 +87,7 @@ CREATE TABLE public.documents (
     source_id character varying(255) NOT NULL,
     path text NOT NULL,
     filename character varying(255) NOT NULL,
-    extension character varying(10) NOT NULL,
+    extension character varying(32) NOT NULL,
     doc_type character varying(20) NOT NULL,
     language character varying(50),
     repository_url text,
@@ -410,4 +410,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260329105900'),
     ('20260329110800'),
     ('20260329114100'),
-    ('20260330074716');
+    ('20260330074716'),
+    ('20260402091500');

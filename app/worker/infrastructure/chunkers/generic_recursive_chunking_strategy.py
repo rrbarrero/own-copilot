@@ -1,9 +1,9 @@
-# app/worker/infrastructure/chunkers/recursive_character_chunker.py
-# (Using LangChain splitters which are already standard for RAG projects)
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from app.worker.domain.chunking_strategy_proto import ChunkingStrategy
 
-class RecursiveCharacterChunker:
+
+class GenericRecursiveChunkingStrategy(ChunkingStrategy):
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
         self._splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,

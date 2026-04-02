@@ -1,4 +1,5 @@
 from app.worker.domain.chunker_proto import ChunkerProto
+from app.worker.domain.document_chunking_context import DocumentChunkingContext
 from app.worker.domain.pipeline_context import PipelineContext
 from app.worker.domain.step_proto import StepProto
 
@@ -25,8 +26,14 @@ class ChunkingStep(StepProto):
         except UnicodeDecodeError as e:
             raise ValueError("Failed to decode document content as UTF-8.") from e
 
-        # 3. Create chunks using the domain chunker
-        chunk_contents = self.chunker.chunk(text)
+        # 3. Create chunks using the domain chunker with document metadata
+        doc_context = DocumentChunkingContext(
+            filename=ctx.filename,
+            extension=ctx.extension,
+            doc_type=ctx.doc_type,
+            language=ctx.language,
+        )
+        chunk_contents = self.chunker.chunk(text, context=doc_context)
 
         # 4. Map to context chunk structure
         ctx.chunks = [

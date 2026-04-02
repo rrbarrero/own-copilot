@@ -13,6 +13,11 @@ class PipelineContext(BaseModel):
     document_id: str | None = None
     repository_sync_id: str | None = None
 
+    filename: str | None = None
+    extension: str | None = None
+    doc_type: str | None = None
+    language: str | None = None
+
     original_bytes: bytes | None = None
     normalized_document: dict[str, Any] | None = None
     chunks: list[dict[str, Any]] = Field(default_factory=list)

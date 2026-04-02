@@ -22,12 +22,14 @@ class RepositoryScanner:
     ALLOWED_EXTENSIONS = {
         "md": DocumentType.MARKDOWN,
         "txt": DocumentType.TEXT,
+        "toml": DocumentType.CONFIG,
         "json": DocumentType.CONFIG,
         "yml": DocumentType.CONFIG,
         "yaml": DocumentType.CONFIG,
         "py": DocumentType.CODE,
         "ts": DocumentType.CODE,
         "go": DocumentType.CODE,
+        "python-version": DocumentType.CONFIG,
     }
 
     EXCLUDED_DIRS = {
@@ -53,7 +55,7 @@ class RepositoryScanner:
 
             for filename in filenames:
                 file_path = Path(dirpath) / filename
-                extension = file_path.suffix.lower().lstrip(".")
+                extension = self._extract_extension(file_path)
 
                 if extension in self.ALLOWED_EXTENSIONS:
                     relative_path = str(file_path.relative_to(root))
@@ -73,6 +75,14 @@ class RepositoryScanner:
                         doc_type=self.ALLOWED_EXTENSIONS[extension],
                         content_hash=content_hash,
                     )
+
+    @staticmethod
+    def _extract_extension(file_path: Path) -> str:
+        # Dotfiles like `.python-version` need to be treated as config files,
+        # not as "extensionless" files.
+        if file_path.name.startswith(".") and file_path.suffix == "":
+            return file_path.name.lstrip(".").lower()
+        return file_path.suffix.lower().lstrip(".")
 
     def _calculate_hash(self, file_path: Path) -> str:
         """Calculates SHA256 of file content."""

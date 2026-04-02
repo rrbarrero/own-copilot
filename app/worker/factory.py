@@ -30,8 +30,11 @@ from app.worker.application.steps.generate_embeddings_step import (
 from app.worker.application.steps.load_document import LoadDocumentStep
 from app.worker.application.steps.save_chunks_step import SaveChunksStep
 from app.worker.domain.step_proto import StepProto
-from app.worker.infrastructure.chunkers.recursive_character_chunker import (
-    RecursiveCharacterChunker,
+from app.worker.infrastructure.chunkers.chunking_strategy_selector import (
+    ChunkingStrategySelector,
+)
+from app.worker.infrastructure.chunkers.document_aware_chunker import (
+    DocumentAwareChunker,
 )
 from app.worker.infrastructure.embeddings.ollama_embedding_service import (
     OllamaEmbeddingService,
@@ -45,7 +48,8 @@ def create_pipeline() -> Pipeline:
     storage_repo = create_storage_repo()
 
     # 2. Initialize domain services
-    chunker = RecursiveCharacterChunker(chunk_size=1000, chunk_overlap=200)
+    selector = ChunkingStrategySelector(chunk_size=1000, chunk_overlap=200)
+    chunker = DocumentAwareChunker(selector=selector)
     embedding_service = OllamaEmbeddingService(
         model=settings.EMBEDDING_MODEL,
         base_url=settings.OLLAMA_BASE_URL,

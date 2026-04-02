@@ -12,24 +12,28 @@ class FileValidationError(Exception):
 class AllowedExtension(StrEnum):
     MD = "md"
     TXT = "txt"
+    TOML = "toml"
     JSON = "json"
     YML = "yml"
     YAML = "yaml"
     PY = "py"
     TS = "ts"
     GO = "go"
+    PYTHON_VERSION = "python-version"
 
     @classmethod
     def get_doc_type(cls, ext: str) -> DocumentType:
         ext_map = {
             cls.MD: DocumentType.MARKDOWN,
             cls.TXT: DocumentType.TEXT,
+            cls.TOML: DocumentType.CONFIG,
             cls.JSON: DocumentType.CONFIG,
             cls.YML: DocumentType.CONFIG,
             cls.YAML: DocumentType.CONFIG,
             cls.PY: DocumentType.CODE,
             cls.TS: DocumentType.CODE,
             cls.GO: DocumentType.CODE,
+            cls.PYTHON_VERSION: DocumentType.CONFIG,
         }
         return ext_map[cls(ext)]
 
