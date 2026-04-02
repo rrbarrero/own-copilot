@@ -14,6 +14,7 @@ class DocumentType(Enum):
     TEXT = "text"
     CODE = "code"
     CONFIG = "config"
+    PDF = "pdf"
 
 
 class DocumentStatus(Enum):

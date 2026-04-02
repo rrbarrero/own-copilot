@@ -57,6 +57,7 @@ class ChunkingStrategySelector:
     def _resolve_strategy_key(self, context: DocumentChunkingContext) -> str | None:
         candidates = (
             self._normalize_extension(context.extension),
+            self._normalize_value(context.normalized_format),
             self._normalize_value(context.doc_type),
             self._normalize_value(context.language),
         )

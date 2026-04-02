@@ -28,7 +28,9 @@ from app.worker.application.steps.generate_embeddings_step import (
     GenerateEmbeddingsStep,
 )
 from app.worker.application.steps.load_document import LoadDocumentStep
+from app.worker.application.steps.normalize_document_step import NormalizeDocumentStep
 from app.worker.application.steps.save_chunks_step import SaveChunksStep
+from app.worker.domain.document_normalizer_proto import DocumentNormalizerProto
 from app.worker.domain.step_proto import StepProto
 from app.worker.infrastructure.chunkers.chunking_strategy_selector import (
     ChunkingStrategySelector,
@@ -36,6 +38,7 @@ from app.worker.infrastructure.chunkers.chunking_strategy_selector import (
 from app.worker.infrastructure.chunkers.document_aware_chunker import (
     DocumentAwareChunker,
 )
+from app.worker.infrastructure.document_normalizers import PdfPyMuPDF4LLMNormalizer
 from app.worker.infrastructure.embeddings.ollama_embedding_service import (
     OllamaEmbeddingService,
 )
@@ -50,6 +53,7 @@ def create_pipeline() -> Pipeline:
     # 2. Initialize domain services
     selector = ChunkingStrategySelector(chunk_size=1000, chunk_overlap=200)
     chunker = DocumentAwareChunker(selector=selector)
+    normalizers: list[DocumentNormalizerProto] = [PdfPyMuPDF4LLMNormalizer()]
     embedding_service = OllamaEmbeddingService(
         model=settings.EMBEDDING_MODEL,
         base_url=settings.OLLAMA_BASE_URL,
@@ -58,6 +62,7 @@ def create_pipeline() -> Pipeline:
     # 3. Assemble steps in logical order (Pipeline Composition Root)
     steps: list[StepProto] = [
         LoadDocumentStep(document_repo=doc_repo, storage_repo=storage_repo),
+        NormalizeDocumentStep(normalizers=normalizers),
         ChunkingStep(chunker=chunker),
         GenerateEmbeddingsStep(embedding_service=embedding_service),
         SaveChunksStep(chunk_repo=chunk_repo),

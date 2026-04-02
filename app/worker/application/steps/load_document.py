@@ -42,3 +42,4 @@ class LoadDocumentStep(StepProto):
         ctx.extension = doc.extension
         ctx.doc_type = doc.doc_type.value if doc.doc_type else None
         ctx.language = doc.language
+        ctx.mime_type = doc.mime_type

@@ -20,11 +20,16 @@ class ChunkingStep(StepProto):
             ctx.chunks = []
             return
 
-        # 3. Decode bytes to text (assuming UTF-8 for now)
-        try:
-            text = ctx.original_bytes.decode("utf-8")
-        except UnicodeDecodeError as e:
-            raise ValueError("Failed to decode document content as UTF-8.") from e
+        normalized_format = None
+        if ctx.normalized_document:
+            text = str(ctx.normalized_document.get("text", ""))
+            normalized_format = ctx.normalized_document.get("format")
+        else:
+            # 3. Decode bytes to text (assuming UTF-8 for now)
+            try:
+                text = ctx.original_bytes.decode("utf-8")
+            except UnicodeDecodeError as e:
+                raise ValueError("Failed to decode document content as UTF-8.") from e
 
         # 3. Create chunks using the domain chunker with document metadata
         doc_context = DocumentChunkingContext(
@@ -32,6 +37,8 @@ class ChunkingStep(StepProto):
             extension=ctx.extension,
             doc_type=ctx.doc_type,
             language=ctx.language,
+            mime_type=ctx.mime_type,
+            normalized_format=normalized_format,
         )
         chunk_contents = self.chunker.chunk(text, context=doc_context)
 

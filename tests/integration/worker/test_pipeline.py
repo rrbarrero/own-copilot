@@ -16,6 +16,7 @@ from app.worker.application.pipeline import Pipeline
 from app.worker.application.steps.chunking_step import ChunkingStep
 from app.worker.application.steps.generate_embeddings_step import GenerateEmbeddingsStep
 from app.worker.application.steps.load_document import LoadDocumentStep
+from app.worker.application.steps.normalize_document_step import NormalizeDocumentStep
 from app.worker.application.steps.save_chunks_step import SaveChunksStep
 from app.worker.domain.pipeline_context import PipelineContext
 from app.worker.domain.step_proto import StepProto
@@ -28,6 +29,18 @@ from app.worker.infrastructure.chunkers.document_aware_chunker import (
 from app.worker.infrastructure.embeddings.in_memory_embedding_service import (
     InMemoryEmbeddingService,
 )
+
+
+class FakePdfNormalizer:
+    def supports(self, context):  # noqa: ANN001
+        return context.extension == "pdf"
+
+    def normalize(self, content: bytes, context):  # noqa: ARG002, ANN001
+        return {
+            "text": "# PDF Title\n\n## Section\n\nNormalized markdown from pdf.",
+            "format": "markdown",
+            "metadata": {"source_format": "pdf", "page_count": 1},
+        }
 
 
 @pytest.mark.asyncio
@@ -68,6 +81,7 @@ async def test_full_pipeline_success():
     # 3. Assemble Pipeline
     steps: list[StepProto] = [
         LoadDocumentStep(doc_repo, storage_repo),
+        NormalizeDocumentStep(normalizers=[]),
         ChunkingStep(chunker),
         GenerateEmbeddingsStep(embedding_service),
         SaveChunksStep(chunk_repo),
@@ -136,6 +150,7 @@ async def test_full_pipeline_uses_specialized_markdown_strategy():
 
     steps: list[StepProto] = [
         LoadDocumentStep(doc_repo, storage_repo),
+        NormalizeDocumentStep(normalizers=[]),
         ChunkingStep(chunker),
         GenerateEmbeddingsStep(embedding_service),
         SaveChunksStep(chunk_repo),
@@ -159,3 +174,59 @@ async def test_full_pipeline_uses_specialized_markdown_strategy():
 
     saved_chunks = chunk_repo.get_chunks(str(doc_id))
     assert len(saved_chunks) == len(ctx.chunks)
+
+
+@pytest.mark.asyncio
+async def test_full_pipeline_normalizes_pdf_before_chunking():
+    doc_repo = InMemoryDocumentRepo()
+    chunk_repo = InMemoryChunkRepo()
+    storage_repo = InMemoryStorageRepo()
+    embedding_service = InMemoryEmbeddingService()
+
+    selector = ChunkingStrategySelector(chunk_size=40, chunk_overlap=0)
+    chunker = DocumentAwareChunker(selector=selector)
+
+    doc_id = uuid4()
+    doc_path = "test/paper.pdf"
+    content = b"%PDF-1.7 fake pdf content"
+
+    doc = Document(
+        uuid=doc_id,
+        source_type=SourceType.UPLOAD,
+        source_id="test-user",
+        path=doc_path,
+        filename="paper.pdf",
+        extension="pdf",
+        doc_type=DocumentType.PDF,
+        processing_status=DocumentStatus.QUEUED,
+        size_bytes=len(content),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+        mime_type="application/pdf",
+    )
+    await doc_repo.save(doc)
+    await storage_repo.save(doc_path, content)
+
+    steps: list[StepProto] = [
+        LoadDocumentStep(doc_repo, storage_repo),
+        NormalizeDocumentStep(normalizers=[FakePdfNormalizer()]),
+        ChunkingStep(chunker),
+        GenerateEmbeddingsStep(embedding_service),
+        SaveChunksStep(chunk_repo),
+    ]
+    pipeline = Pipeline(steps)
+
+    ctx = PipelineContext(
+        job_id="job-pdf-123",
+        job_type="ingestion",
+        payload={"doc_uuid": str(doc_id)},
+        document_id=str(doc_id),
+    )
+
+    await pipeline.run(ctx)
+
+    assert ctx.mime_type == "application/pdf"
+    assert ctx.normalized_document is not None
+    assert ctx.normalized_document["format"] == "markdown"
+    assert len(ctx.chunks) >= 1
+    assert any("PDF Title" in chunk["content"] for chunk in ctx.chunks)

@@ -18,7 +18,7 @@ jobs:
       - name: Build and Run Checks
         run: |
           docker compose build app
-          make check
+          make check-ci
 
       - name: Run Migrations
         run: |

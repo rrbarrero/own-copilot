@@ -17,6 +17,7 @@ class PipelineContext(BaseModel):
     extension: str | None = None
     doc_type: str | None = None
     language: str | None = None
+    mime_type: str | None = None
 
     original_bytes: bytes | None = None
     normalized_document: dict[str, Any] | None = None

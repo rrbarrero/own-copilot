@@ -22,6 +22,7 @@ class RepositoryScanner:
     ALLOWED_EXTENSIONS = {
         "md": DocumentType.MARKDOWN,
         "txt": DocumentType.TEXT,
+        "pdf": DocumentType.PDF,
         "toml": DocumentType.CONFIG,
         "json": DocumentType.CONFIG,
         "yml": DocumentType.CONFIG,

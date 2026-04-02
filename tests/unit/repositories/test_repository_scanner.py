@@ -33,3 +33,17 @@ def test_scan_includes_toml_and_python_version(tmp_path: Path):
     assert ".python-version" in by_name
     assert by_name[".python-version"].extension == "python-version"
     assert by_name[".python-version"].doc_type == DocumentType.CONFIG
+
+
+def test_scan_includes_pdf(tmp_path: Path):
+    scanner = RepositoryScanner()
+
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.7 fake pdf bytes")
+
+    scanned = list(scanner.scan(str(tmp_path)))
+    by_name = {item.filename: item for item in scanned}
+
+    assert "paper.pdf" in by_name
+    assert by_name["paper.pdf"].extension == "pdf"
+    assert by_name["paper.pdf"].doc_type == DocumentType.PDF

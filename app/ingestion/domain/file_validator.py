@@ -12,6 +12,7 @@ class FileValidationError(Exception):
 class AllowedExtension(StrEnum):
     MD = "md"
     TXT = "txt"
+    PDF = "pdf"
     TOML = "toml"
     JSON = "json"
     YML = "yml"
@@ -26,6 +27,7 @@ class AllowedExtension(StrEnum):
         ext_map = {
             cls.MD: DocumentType.MARKDOWN,
             cls.TXT: DocumentType.TEXT,
+            cls.PDF: DocumentType.PDF,
             cls.TOML: DocumentType.CONFIG,
             cls.JSON: DocumentType.CONFIG,
             cls.YML: DocumentType.CONFIG,

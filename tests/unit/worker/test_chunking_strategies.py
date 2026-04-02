@@ -75,6 +75,13 @@ def test_select_python_strategy_from_language_without_extension():
     assert isinstance(strategy, PythonChunkingStrategy)
 
 
+def test_select_markdown_strategy_from_normalized_format_for_pdf():
+    selector = ChunkingStrategySelector()
+    ctx = DocumentChunkingContext(extension="pdf", normalized_format="markdown")
+    strategy = selector.select(ctx)
+    assert isinstance(strategy, MarkdownChunkingStrategy)
+
+
 def test_select_normalizes_extension_with_dot_prefix():
     selector = ChunkingStrategySelector()
     ctx = DocumentChunkingContext(extension=".go")
