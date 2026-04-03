@@ -16,6 +16,20 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+
+--
 -- Name: vector; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -270,6 +284,20 @@ CREATE INDEX idx_conversations_scope ON public.conversations USING btree (scope_
 
 
 --
+-- Name: idx_document_chunks_content_fts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_document_chunks_content_fts ON public.document_chunks USING gin (to_tsvector('simple'::regconfig, content));
+
+
+--
+-- Name: idx_document_chunks_content_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_document_chunks_content_trgm ON public.document_chunks USING gin (lower(content) public.gin_trgm_ops);
+
+
+--
 -- Name: idx_document_chunks_doc_uuid; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -288,6 +316,20 @@ CREATE INDEX idx_document_chunks_embedding ON public.document_chunks USING hnsw 
 --
 
 CREATE INDEX idx_documents_content_hash ON public.documents USING btree (content_hash);
+
+
+--
+-- Name: idx_documents_filename_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_filename_trgm ON public.documents USING gin (lower((filename)::text) public.gin_trgm_ops);
+
+
+--
+-- Name: idx_documents_path_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_path_trgm ON public.documents USING gin (lower(path) public.gin_trgm_ops);
 
 
 --
@@ -411,4 +453,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260329110800'),
     ('20260329114100'),
     ('20260330074716'),
-    ('20260402091500');
+    ('20260402091500'),
+    ('20260403110000');

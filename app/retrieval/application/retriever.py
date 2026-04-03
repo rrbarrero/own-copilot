@@ -36,6 +36,7 @@ class Retriever:
             scope=scope,
             top_k=self._top_k,
             threshold=self._threshold,
+            question=question,
         )
 
         if results or self._fallback_threshold is None:
@@ -60,4 +61,5 @@ class Retriever:
             scope=scope,
             top_k=self._top_k,
             threshold=self._fallback_threshold,
+            question=question,
         )

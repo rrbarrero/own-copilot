@@ -7,7 +7,7 @@ from app.retrieval.domain.retrieved_chunk import RetrievedChunk
 from app.schemas.chat import ChatScope, ScopeType
 
 
-class PostgresRetrievalRepo:
+class PostgresVectorRetrievalProvider:
     def __init__(self, pool: AsyncConnectionPool):
         self._pool = pool
 
@@ -24,7 +24,6 @@ class PostgresRetrievalRepo:
         ):
             # Base query with vector similarity
             # 1 - (<=>) is cosine similarity in pgvector
-            # We explicitly cast to ::vector for the operator to match
             query = """
                 SELECT
                     dc.document_uuid,

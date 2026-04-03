@@ -18,7 +18,14 @@ from app.repositories.domain.repository import Repository
 from app.repositories.infra.postgres_repository_repo import PostgresRepositoryRepo
 from app.retrieval.application.chat_with_citations import ChatWithCitations
 from app.retrieval.application.retriever import Retriever
-from app.retrieval.infra.postgres_retrieval_repo import PostgresRetrievalRepo
+from app.retrieval.infra.hybrid_retrieval_service import HybridRetrievalService
+from app.retrieval.infra.postgres_lexical_retrieval_provider import (
+    PostgresLexicalRetrievalProvider,
+)
+from app.retrieval.infra.postgres_vector_retrieval_provider import (
+    PostgresVectorRetrievalProvider,
+)
+from app.retrieval.infra.rrf_rank_fuser import RRFRankFuser
 from app.schemas.chat import ChatRequest, ChatScope, ScopeType
 
 
@@ -36,7 +43,11 @@ async def test_chat_with_citations_integration(db_pool):
     doc_repo = PostgresDocumentRepo(db_pool)
     chunk_repo = PostgresChunkRepo(db_pool)
     repo_repo = PostgresRepositoryRepo(db_pool)
-    retrieval_repo = PostgresRetrievalRepo(db_pool)
+    retrieval_repo = HybridRetrievalService(
+        vector_provider=PostgresVectorRetrievalProvider(db_pool),
+        lexical_provider=PostgresLexicalRetrievalProvider(db_pool),
+        rank_fuser=RRFRankFuser(),
+    )
 
     # 1. Setup: Insert a repository, a document and its chunks
     repo_id = uuid4()

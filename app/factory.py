@@ -54,10 +54,17 @@ from app.repositories.infra.repository_url_normalizer import (
 )
 from app.retrieval.application.chat_with_citations import ChatWithCitations
 from app.retrieval.application.retriever import Retriever
+from app.retrieval.infra.hybrid_retrieval_service import HybridRetrievalService
 from app.retrieval.infra.ollama_query_embedding_service import (
     OllamaQueryEmbeddingService,
 )
-from app.retrieval.infra.postgres_retrieval_repo import PostgresRetrievalRepo
+from app.retrieval.infra.postgres_lexical_retrieval_provider import (
+    PostgresLexicalRetrievalProvider,
+)
+from app.retrieval.infra.postgres_vector_retrieval_provider import (
+    PostgresVectorRetrievalProvider,
+)
+from app.retrieval.infra.rrf_rank_fuser import RRFRankFuser
 from app.tools.application.find_files import FindFiles
 from app.tools.application.read_file import ReadFile
 from app.tools.application.repository_tool_service import RepositoryToolService
@@ -115,7 +122,11 @@ def create_ingestion_service() -> IngestionService:
 
 
 def create_retrieval_repo():
-    return PostgresRetrievalRepo(Database.get_pool())
+    return HybridRetrievalService(
+        vector_provider=PostgresVectorRetrievalProvider(Database.get_pool()),
+        lexical_provider=PostgresLexicalRetrievalProvider(Database.get_pool()),
+        rank_fuser=RRFRankFuser(),
+    )
 
 
 @lru_cache
