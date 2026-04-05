@@ -51,6 +51,12 @@ def create_pipeline() -> Pipeline:
     storage_repo = create_storage_repo()
 
     # 2. Initialize domain services
+    from app.worker.application.steps.raptor_enrichment_step import RaptorEnrichmentStep
+    from app.worker.infrastructure.extractors.python_structural_extractor import (
+        PythonStructuralExtractor,
+    )
+    from app.worker.infrastructure.llm.ollama_generator import OllamaGenerator
+
     selector = ChunkingStrategySelector(chunk_size=1000, chunk_overlap=200)
     chunker = DocumentAwareChunker(selector=selector)
     normalizers: list[DocumentNormalizerProto] = [PdfPyMuPDF4LLMNormalizer()]
@@ -58,12 +64,25 @@ def create_pipeline() -> Pipeline:
         model=settings.EMBEDDING_MODEL,
         base_url=settings.OLLAMA_BASE_URL,
     )
+    # Configure RAPTOR components
+    raptor_extractor = PythonStructuralExtractor()
+    raptor_generator = OllamaGenerator(
+        model=settings.LLM_MODEL, base_url=settings.OLLAMA_BASE_URL
+    )
 
     # 3. Assemble steps in logical order (Pipeline Composition Root)
     steps: list[StepProto] = [
         LoadDocumentStep(document_repo=doc_repo, storage_repo=storage_repo),
         NormalizeDocumentStep(normalizers=normalizers),
         ChunkingStep(chunker=chunker),
+        RaptorEnrichmentStep(
+            extractor=raptor_extractor,
+            generator=raptor_generator,
+            enabled=settings.RAPTOR_ENABLED,
+            max_units_per_document=settings.RAPTOR_MAX_UNITS_PER_DOCUMENT,
+            max_unit_chars=settings.RAPTOR_MAX_UNIT_CHARS,
+            max_concurrent_llm=2,
+        ),
         GenerateEmbeddingsStep(embedding_service=embedding_service),
         SaveChunksStep(chunk_repo=chunk_repo),
     ]

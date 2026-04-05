@@ -42,6 +42,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 markers = [
     "e2e: marks tests as end-to-end integration tests (deselect with '-m \"not e2e\"')",
+    "shared_ingestion: reuses one expensive repository sync/index across multiple E2E tests",
 ]
 addopts = "-m 'not e2e'"
 

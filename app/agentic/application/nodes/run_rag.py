@@ -32,13 +32,21 @@ class RunRagNode:
         citations = state["citations"][:]  # Clone list
 
         for i, chunk in enumerate(chunks):
-            context_items.append(f"[{i + 1}] {chunk.content}")
+            # Enriched context prefix for RAPTOR summaries
+            kind = chunk.metadata.get("chunk_kind", "raw")
+            prefix = ""
+            if kind == "summary":
+                level = chunk.metadata.get("summary_level", "symbol")
+                symbol_name = chunk.metadata.get("symbol_name", "")
+                prefix = f"[SUMMARY {level.upper()} {symbol_name}] "
+
+            context_items.append(f"[{i + 1}] {prefix}{chunk.content}")
             citations.append(
                 {
                     "document_id": chunk.document_uuid,
                     "path": chunk.path,
                     "filename": chunk.filename,
-                    "chunk_index": chunk.chunk_index,
+                    "chunk_index": self._resolve_citation_chunk_index(chunk),
                 }
             )
 
@@ -57,3 +65,14 @@ class RunRagNode:
             "reasoning_trace": state["reasoning_trace"]
             + [f"RAG executed. Obtained {len(chunks)} chunks."],
         }
+
+    @staticmethod
+    def _resolve_citation_chunk_index(chunk) -> int:  # noqa: ANN001
+        if chunk.metadata.get("chunk_kind") != "summary":
+            return chunk.chunk_index
+
+        parent_chunk_indexes = chunk.metadata.get("parent_chunk_indexes", [])
+        if parent_chunk_indexes:
+            return int(parent_chunk_indexes[0])
+
+        return chunk.chunk_index

@@ -3,12 +3,10 @@ import logging
 import signal
 
 from app.infra.db import Database
+from app.logging_utils import configure_logging
 from app.worker.factory import create_worker
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+configure_logging("worker")
 logger = logging.getLogger("worker")
 
 

@@ -106,6 +106,7 @@ class SyncRepositoryJobHandler(JobHandlerProto):
                             size_bytes=scanned_file.size_bytes,
                             created_at=datetime.now(UTC),
                             updated_at=datetime.now(UTC),
+                            language=scanned_file.language,
                             repository_id=repo.id,
                             repository_url=repo.clone_url,
                             branch=checkout_info.branch,
@@ -117,6 +118,7 @@ class SyncRepositoryJobHandler(JobHandlerProto):
                         doc.content_hash = scanned_file.content_hash
                         doc.size_bytes = scanned_file.size_bytes
                         doc.updated_at = datetime.now(UTC)
+                        doc.language = scanned_file.language
                         # Reset to pending for re-indexing
                         doc.processing_status = DocumentStatus.QUEUED
                         doc.repository_sync_id = sync.id

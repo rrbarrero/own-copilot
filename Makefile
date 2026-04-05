@@ -1,6 +1,10 @@
-.PHONY: test test-all dev check check-ci migrate migrate-new migrate-status uv-add prep
+.PHONY: test test-all test-no-e2e test-e2e dev check check-ci migrate migrate-new migrate-status uv-add prep prep-e2e validate
 
 prep:
+	docker compose up -d db
+	docker compose run --rm dbmate up
+
+prep-e2e:
 	docker compose up -d db worker
 	docker compose run --rm dbmate up
 
@@ -9,7 +13,14 @@ test:
 	docker compose run --rm dbmate up
 	docker compose run -e TESTING=true --rm app pytest
 
-test-all: prep
+test-no-e2e: prep
+	docker compose stop worker || true
+	docker compose run -e TESTING=true --rm app pytest -m "not e2e"
+
+test-e2e: prep-e2e
+	docker compose run -e TESTING=true --rm app pytest -m e2e
+
+test-all: prep-e2e
 	docker compose run -e TESTING=true --rm app pytest -m ""
 
 dev:
@@ -25,7 +36,7 @@ check-ci:
 	docker compose run --rm app ruff format --no-cache --check .
 	docker compose run --rm app pyrefly check
 
-validate: test-all check-ci
+validate: check test-no-e2e test-e2e
 
 migrate:
 	docker compose run --rm dbmate up

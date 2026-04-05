@@ -42,8 +42,18 @@ class ChunkingStep(StepProto):
         )
         chunk_contents = self.chunker.chunk(text, context=doc_context)
 
-        # 4. Map to context chunk structure
+        # 4. Map to context chunk structure with base metadata
+        from app.worker.domain.raptor_metadata import ChunkKind, RaptorMetadata
+
         ctx.chunks = [
-            {"content": content, "chunk_index": idx}
+            {
+                "content": content,
+                "chunk_index": idx,
+                "metadata": RaptorMetadata(
+                    chunk_kind=ChunkKind.RAW,
+                    language=ctx.language,
+                    parent_path=ctx.source_path,
+                ).to_dict(),
+            }
             for idx, content in enumerate(chunk_contents)
         ]

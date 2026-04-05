@@ -16,6 +16,7 @@ class ScannedRepositoryFile:
     size_bytes: int
     doc_type: DocumentType
     content_hash: str
+    language: str | None = None
 
 
 class RepositoryScanner:
@@ -72,6 +73,7 @@ class RepositoryScanner:
                         absolute_path=str(file_path),
                         filename=filename,
                         extension=extension,
+                        language=self._infer_language(extension),
                         size_bytes=size_bytes,
                         doc_type=self.ALLOWED_EXTENSIONS[extension],
                         content_hash=content_hash,
@@ -92,3 +94,12 @@ class RepositoryScanner:
             while chunk := f.read(8192):
                 sha256.update(chunk)
         return sha256.hexdigest()
+
+    @staticmethod
+    def _infer_language(extension: str) -> str | None:
+        return {
+            "py": "python",
+            "ts": "typescript",
+            "go": "go",
+            "md": "markdown",
+        }.get(extension)

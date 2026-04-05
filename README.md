@@ -22,6 +22,16 @@ AI Code Knowledge Assistant solves the problem of asking useful, grounded questi
 - End-to-end testing
 - Typed configuration management
 - Infrastructure isolation
+- Continuous code quality validation (`make check`)
+- Linting and automatic formatting enforcement (Ruff)
+- In-depth architectural and code validation (Pyrefly)
+- Strict compliance with modern Python typing standards
+- Maximum 88-character line length enforcement (E501)
+- Bug-prevention and safety rule enforcement (flake8-bugbear)
+- Systematic performance and syntax upgrades (pyupgrade)
+- Interface consistency and abstract method validation (B024)
+- Automated type-safety and modern typing usage (UP042)
+- Docker-powered CI pipeline (GitHub Actions) for consistent validation across push and PRs (linting, migrations, and test suite).
 
 ## AI Code Knowledge Assistant Best Practices
 
@@ -43,3 +53,4 @@ AI Code Knowledge Assistant solves the problem of asking useful, grounded questi
 - Incremental reindexing by content hash
 - Document chunking for LLM retrieval
 - Format-aware document normalization
+- Hierarchical Summarization (RAPTOR) for high-level technical query retrieval via Python structural code unit analysis (classes, functions, modules) and summary nodes.

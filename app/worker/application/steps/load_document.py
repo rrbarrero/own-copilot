@@ -43,3 +43,5 @@ class LoadDocumentStep(StepProto):
         ctx.doc_type = doc.doc_type.value if doc.doc_type else None
         ctx.language = doc.language
         ctx.mime_type = doc.mime_type
+        ctx.source_path = doc.source_id
+        ctx.source_type = doc.source_type.value

@@ -170,7 +170,7 @@ def chat(
         raise typer.Exit(code=1)
 
     try:
-        with httpx.Client(timeout=60.0) as client:
+        with httpx.Client(timeout=60.0 * 3) as client:
             _do_chat(client, full_url, question, scope, effective_conv_id)
     except Exception as e:
         typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
@@ -206,7 +206,7 @@ def repl(
         fg=typer.colors.MAGENTA,
     )
 
-    with httpx.Client(timeout=60.0) as client:
+    with httpx.Client(timeout=60.0 * 3) as client:
         while True:
             question = typer.prompt("Copilot >>")
             if question.lower() in ["exit", "quit"]:

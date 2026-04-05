@@ -32,6 +32,9 @@ class HybridRetrievalService:
         threshold: float = 0.5,
         question: str | None = None,
     ) -> list[RetrievedChunk]:
+        is_abstract = self._is_abstract_question(question)
+        provider_top_k = top_k * 3 if is_abstract else top_k * 2
+
         # If no question is provided, fallback to vector only
         if not question:
             return await self._vector_provider.search(
@@ -46,7 +49,7 @@ class HybridRetrievalService:
         vector_results = await self._vector_provider.search(
             query_embedding=query_embedding,
             scope=scope,
-            top_k=top_k * 2,  # Pool for fusion
+            top_k=provider_top_k,
             threshold=threshold,
         )
 
@@ -54,7 +57,7 @@ class HybridRetrievalService:
         lexical_results = await self._lexical_provider.search(
             question=question,
             scope=scope,
-            top_k=top_k * 2,  # Pool for fusion
+            top_k=provider_top_k,
         )
 
         logger.info(
@@ -74,8 +77,69 @@ class HybridRetrievalService:
             return []
 
         # 3. Fuse rankings
-        return self._rank_fuser.fuse(
+        results = self._rank_fuser.fuse(
             vector_results=vector_results,
             lexical_results=lexical_results,
-            top_k=top_k,
+            top_k=provider_top_k,
         )
+
+        if not is_abstract:
+            return results[:top_k]
+
+        return self._rebalance_abstract_results(results, top_k=top_k)
+
+    @staticmethod
+    def _is_abstract_question(question: str | None) -> bool:
+        if not question:
+            return False
+
+        lowered = question.lower()
+        return any(
+            term in lowered
+            for term in [
+                "responsibility",
+                "purpose",
+                "role",
+                "overview",
+                "summary",
+                "high level",
+                "architecture",
+                "what does",
+                "doing",
+                "intent",
+                "goal",
+            ]
+        )
+
+    def _rebalance_abstract_results(
+        self, results: list[RetrievedChunk], top_k: int
+    ) -> list[RetrievedChunk]:
+        summaries = [r for r in results if r.metadata.get("chunk_kind") == "summary"]
+        if not summaries:
+            return results[:top_k]
+
+        summary_cap = min(len(summaries), max(1, top_k // 2))
+        selected_keys: set[tuple[object, int]] = set()
+        selected: list[RetrievedChunk] = []
+
+        for chunk in summaries[:summary_cap]:
+            key = (chunk.document_uuid, chunk.chunk_index)
+            selected_keys.add(key)
+            selected.append(chunk)
+
+        for chunk in results:
+            key = (chunk.document_uuid, chunk.chunk_index)
+            if key in selected_keys:
+                continue
+            selected.append(chunk)
+            selected_keys.add(key)
+            if len(selected) >= top_k:
+                break
+
+        logger.info(
+            "hybrid_retrieval.raptor_bias "
+            "abstract_query summaries_selected=%d top_k=%d",
+            min(len(summaries), summary_cap),
+            top_k,
+        )
+        return selected[:top_k]

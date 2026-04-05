@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI
 
+from app.config import settings
 from app.conversation.application.chat_service import ChatService
 from app.factory import (
     create_chat_service,
@@ -15,16 +16,14 @@ from app.factory import (
 from app.infra.db import Database
 from app.ingestion.domain.document_repo_proto import DocumentRepoProto
 from app.ingestion.infra.endpoints import router as ingestion_router
+from app.logging_utils import configure_logging
 from app.repositories.domain.repository_repo_proto import RepositoryRepoProto
 from app.repositories.infra.endpoints import router as repository_router
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.tools.infra.endpoints import router as tools_router
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logging.getLogger("app").setLevel(logging.INFO)
+configure_logging("api")
+logging.getLogger("app").setLevel(logging.DEBUG if settings.DEBUG else logging.INFO)
 logger = logging.getLogger(__name__)
 
 

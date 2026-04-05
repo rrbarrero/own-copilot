@@ -12,7 +12,7 @@ services:
       - .env
     environment:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - LLM_MODEL=${LLM_MODEL:-qwen3:8b-16k}
+      - LLM_MODEL=${LLM_MODEL:-qwen3-8b-12k:latest}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-bge-m3:latest}
       - DATABASE_URL=${DATABASE_URL:-postgres://postgres:postgres@db:5432/postgres?sslmode=disable}
     extra_hosts:
@@ -33,7 +33,7 @@ services:
       - .env
     environment:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - LLM_MODEL=${LLM_MODEL:-qwen3:8b-16k}
+      - LLM_MODEL=${LLM_MODEL:-qwen3-8b-12k:latest}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-bge-m3:latest}
       - DATABASE_URL=${DATABASE_URL:-postgres://postgres:postgres@db:5432/postgres?sslmode=disable}
     extra_hosts:
