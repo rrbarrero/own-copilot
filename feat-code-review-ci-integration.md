@@ -116,3 +116,88 @@ as `Haz una review de la rama new-model-llm-evaluation`.
 - That kind of multi-agent workflow would benefit from strong observability, so
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
+
+## Reproduce
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/rrbarrero/own-copilot.git
+cd own-copilot
+```
+
+### 2. Configure the environment
+
+Create a local `.env` from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+At minimum, verify these values:
+
+```env
+DEBUG=false
+DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+STORAGE_PATH=/app/storage
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+LLM_MODEL=qwen3-8b-12k:latest
+EMBEDDING_MODEL=bge-m3:latest
+LLM_TEMPERATURE=0.0
+RAPTOR_ENABLED=true
+RAPTOR_MAX_UNITS_PER_DOCUMENT=2
+RAPTOR_MAX_UNIT_CHARS=1500
+```
+
+If Ollama is not reachable through `host.docker.internal` in your environment,
+replace `OLLAMA_BASE_URL` with the correct URL for the machine running Ollama.
+
+### 3. Start the stack with Docker
+
+```bash
+docker compose up --build
+```
+
+This starts the API, worker, and database through Docker.
+
+### 4. Verify that Ollama is ready
+
+Make sure the selected models are available locally before running the flow.
+
+```bash
+ollama list
+```
+
+### 5. Run the code review flow
+
+1. Synchronize the default branch:
+
+```bash
+uv run python scripts/api_client.py sync-repo https://github.com/rrbarrero/credit-fraud.git
+```
+
+2. Synchronize the branch you want to review:
+
+```bash
+uv run python scripts/api_client.py sync-repo \
+  https://github.com/rrbarrero/credit-fraud.git \
+  --branch new-feature-branch
+```
+
+3. Wait until both sync jobs are completed.
+
+4. Run the review:
+
+```bash
+uv run python scripts/api_client.py review-branch \
+  <repository_id> \
+  new-feature-branch
+```
+
+### 6. Validate the implementation
+
+Run the non-E2E suite through the project Makefile:
+
+```bash
+make test-no-e2e
+```
