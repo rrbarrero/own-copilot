@@ -2,6 +2,13 @@
 
 AI Code Knowledge Assistant solves the problem of asking useful, grounded questions about a codebase or technical document set without relying on the model's memory alone. Instead of answering from generic knowledge, it ingests files and repository snapshots, indexes them, and retrieves relevant evidence so responses can stay tied to the actual source material, including exact code identifiers, paths, and citations.
 
+## Featured Use Case
+
+- [Code Review CI Integration](./feat-code-review-ci-integration.md): study-case
+  implementation of branch review against `main`, built on top of the current
+  repository sync and agentic workflow, with notes on tradeoffs, CI evolution,
+  and how to reproduce it locally with Docker.
+
 ## Design And Architecture Best Practices
 
 - Domain-Driven Design (DDD)
