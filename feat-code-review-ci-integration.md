@@ -1,7 +1,11 @@
 # Feature: Code Review CI Integration
 
-The assistant can review a repository branch against `main` using synchronized
-repository snapshots instead of generic model memory.
+This feature allows the system to review a repository branch against `main`
+after synchronizing both branches, computing the diff between their snapshots,
+and generating structured findings with severity, affected file, and line
+range. In a CI-oriented workflow, the same capability can be used as an
+automated review step before merge, and later extended with sandboxed
+execution, remediation agents, and validation stages.
 
 ## How it works
 
@@ -85,9 +89,15 @@ as `Haz una review de la rama new-model-llm-evaluation`.
 
 ### Pros of a local LLM setup
 
-- Keeping repository snapshots in the local filesystem is materially cheaper
-  and faster than pushing the same workflow through external hosted
-  infrastructure.
+- In repository-heavy RAG workflows, a local setup makes it easier to keep
+  embeddings, indexed chunks, retrieval logic, and repository snapshots close
+  to the same execution environment, which reduces integration friction.
+- For repeated vectorization and retrieval over the same repositories, the
+  marginal cost is usually lower than calling an external API for each
+  embedding or review-related interaction.
+- Data locality is also better: the retrieval pipeline can operate near the
+  source snapshots, chunk store, and vector index without depending on
+  round-trips to external hosted services.
 - Privacy is a primary constraint here: the current approach deliberately
   favors keeping repository contents and review execution close to the local
   environment.
@@ -115,6 +125,10 @@ as `Haz una review de la rama new-model-llm-evaluation`.
   instruction-following, depth of reasoning, and robustness on harder review
   tasks, so the tradeoff is not only cost and privacy, but also raw model
   capability.
+- In any case, moving from an internal LLM backend to an external one would be
+  relatively trivial from an architectural perspective, because the main value
+  of the system is in the orchestration, retrieval, repository handling, and
+  review workflow around the model rather than in a provider-specific coupling.
 
 ## Next Step
 
