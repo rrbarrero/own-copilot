@@ -18,18 +18,33 @@ How it works:
 Example:
 
 ```bash
+# Synchronize the default branch (typically main) and register the repository.
 uv run python scripts/api_client.py sync-repo https://github.com/rrbarrero/credit-fraud.git
 
+# Synchronize the feature branch that will be reviewed against main.(1)
 uv run python scripts/api_client.py sync-repo \
   https://github.com/rrbarrero/credit-fraud.git \
   --branch new-model-llm-evaluation
 
+# Run the branch review using the repository ID and the target branch name.
 uv run python scripts/api_client.py review-branch \
   e2196e4e-fc51-46ec-aeff-f56cc36e08cd \
   new-model-llm-evaluation
 ```
 
-Example response:
+What each command does:
+
+- `uv run python scripts/api_client.py sync-repo <repo-url>` enqueues a sync for
+  the repository default branch so the system has a `main` snapshot to compare
+  against.
+- `uv run python scripts/api_client.py sync-repo <repo-url> --branch <branch>`
+  enqueues a second sync for the feature branch that you want to inspect.
+- `uv run python scripts/api_client.py review-branch <repository-id> <branch>`
+  resolves the latest completed syncs for `main` and the target branch,
+  computes the diff between both snapshots, and asks the LLM to produce
+  structured review findings.
+
+Example response (real response from a test):
 
 ```json
 {
@@ -59,7 +74,7 @@ Note:
 
 - This branch review flow is implemented as a study case to validate the
   product direction.
-- Repository and branch synchronization were not originally designed for this
+- (1) Repository and branch synchronization were not originally designed for this
   use case, so the current approach is functional but not the most optimal
   architecture for large-scale or high-frequency review workflows.
 - Because this project is designed around a **private LLM setup**, keeping
