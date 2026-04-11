@@ -12,6 +12,7 @@ class ScopeType(StrEnum):
 class ChatScope(BaseModel):
     type: ScopeType
     repository_id: UUID | None = None
+    repository_sync_id: UUID | None = None
     document_id: UUID | None = None
 
 

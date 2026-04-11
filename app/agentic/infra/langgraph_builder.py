@@ -9,6 +9,7 @@ from app.agentic.application.nodes.rewrite_question import RewriteQuestionNode
 from app.agentic.application.nodes.run_find_files import RunFindFilesNode
 from app.agentic.application.nodes.run_rag import RunRagNode
 from app.agentic.application.nodes.run_read_file import RunReadFileNode
+from app.agentic.application.nodes.run_review_branch import RunReviewBranchNode
 from app.agentic.application.nodes.run_search_in_repo import RunSearchInRepoNode
 from app.agentic.application.nodes.stop_no_evidence import StopNoEvidenceNode
 from app.agentic.domain.graph_state import AgentGraphState
@@ -24,6 +25,7 @@ class LangGraphBuilder:
         rag_node: RunRagNode,
         find_files_node: RunFindFilesNode,
         read_file_node: RunReadFileNode,
+        review_branch_node: RunReviewBranchNode,
         search_in_repo_node: RunSearchInRepoNode,
         evaluate_node: EvaluateEvidenceNode,
         answer_node: AnswerFromContextNode,
@@ -34,6 +36,7 @@ class LangGraphBuilder:
         self._rag = rag_node
         self._find_files = find_files_node
         self._read_file = read_file_node
+        self._review_branch = review_branch_node
         self._search_in_repo = search_in_repo_node
         self._evaluate = evaluate_node
         self._answer = answer_node
@@ -51,6 +54,7 @@ class LangGraphBuilder:
         workflow.add_node("rag", self._rag)  # type: ignore
         workflow.add_node("find_files", self._find_files)  # type: ignore
         workflow.add_node("read_file", self._read_file)  # type: ignore
+        workflow.add_node("review_branch", self._review_branch)  # type: ignore
         workflow.add_node("search_in_repo", self._search_in_repo)  # type: ignore
         workflow.add_node("evaluate", self._evaluate)  # type: ignore
         workflow.add_node("answer", self._answer)  # type: ignore
@@ -72,6 +76,7 @@ class LangGraphBuilder:
             if strategy in [
                 "find_files",
                 "read_file",
+                "review_branch",
                 "search_in_repo",
                 "rag",
                 "stop_no_evidence",
@@ -86,6 +91,7 @@ class LangGraphBuilder:
                 "rag": "rag",
                 "find_files": "find_files",
                 "read_file": "read_file",
+                "review_branch": "review_branch",
                 "search_in_repo": "search_in_repo",
                 "answer": "answer",
                 "stop_no_evidence": "stop_no_evidence",
@@ -96,6 +102,7 @@ class LangGraphBuilder:
         workflow.add_edge("rag", "evaluate")
         workflow.add_edge("find_files", "evaluate")
         workflow.add_edge("read_file", "evaluate")
+        workflow.add_edge("review_branch", "evaluate")
         workflow.add_edge("search_in_repo", "evaluate")
 
         # Evaluate goes back to decide or completes with answer

@@ -38,9 +38,11 @@ class ReadFile:
         repository_id: UUID,
         path: str,
         max_chars: int = 20000,
+        *,
+        repository_sync_id: UUID | None = None,
     ) -> ReadFileResult:
         # 1. Resolve snapshot
-        snapshot = await self._resolver.resolve(repository_id)
+        snapshot = await self._resolver.resolve(repository_id, repository_sync_id)
 
         # 2. Resolve safe absolute path within snapshot
         abs_target = resolve_safe_path(snapshot.root_path, path)

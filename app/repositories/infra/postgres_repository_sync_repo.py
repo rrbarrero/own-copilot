@@ -97,6 +97,27 @@ class PostgresRepositorySyncRepo(RepositorySyncRepoProto):
             row = await cur.fetchone()
             return self._row_to_entity(row) if row else None
 
+    async def get_latest_completed_by_repository_and_branch(
+        self, repository_id: UUID, branch: str
+    ) -> RepositorySync | None:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                """
+                SELECT * FROM repository_syncs
+                WHERE repository_id = %s
+                  AND branch = %s
+                  AND status = 'completed'
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (str(repository_id), branch),
+            )
+            row = await cur.fetchone()
+            return self._row_to_entity(row) if row else None
+
     async def list_by_repository_id(self, repository_id: UUID) -> list[RepositorySync]:
         async with (
             self._pool.connection() as conn,

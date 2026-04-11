@@ -140,6 +140,9 @@ def _do_chat(
 def chat(
     question: Annotated[str, typer.Argument(help="Your question for the copilot")],
     repo_id: Annotated[str | None, typer.Option(help="Filter by repository ID")] = None,
+    repo_sync_id: Annotated[
+        str | None, typer.Option(help="Filter by repository sync ID")
+    ] = None,
     doc_id: Annotated[str | None, typer.Option(help="Filter by document ID")] = None,
     conv_id: Annotated[
         str | None, typer.Option(help="Specific conversation ID")
@@ -162,7 +165,11 @@ def chat(
     if doc_id:
         scope = {"type": "document", "document_id": doc_id}
     elif repo_id:
-        scope = {"type": "repository", "repository_id": repo_id}
+        scope = {
+            "type": "repository",
+            "repository_id": repo_id,
+            "repository_sync_id": repo_sync_id,
+        }
     else:
         typer.secho(
             "Error: Scope required (use --repo-id or --doc-id).", fg=typer.colors.RED
@@ -179,6 +186,9 @@ def chat(
 @app.command()
 def repl(
     repo_id: Annotated[str | None, typer.Option(help="Filter by repository ID")] = None,
+    repo_sync_id: Annotated[
+        str | None, typer.Option(help="Filter by repository sync ID")
+    ] = None,
     doc_id: Annotated[str | None, typer.Option(help="Filter by document ID")] = None,
     url: Annotated[str, typer.Option(help="API Base URL")] = "http://localhost:8000",
 ):
@@ -197,7 +207,11 @@ def repl(
     scope = (
         {"type": "document", "document_id": doc_id}
         if doc_id
-        else {"type": "repository", "repository_id": repo_id}
+        else {
+            "type": "repository",
+            "repository_id": repo_id,
+            "repository_sync_id": repo_sync_id,
+        }
     )
     conv_id = None
 
@@ -262,6 +276,50 @@ def list_docs(
                     typer.echo(f"- {doc['filename']} (ID: {doc['id']})")
             else:
                 typer.secho(f"Error: {response.status_code}", fg=typer.colors.RED)
+    except Exception as e:
+        typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
+
+
+@app.command()
+def resolve_branch(
+    repository_id: Annotated[str, typer.Argument(help="Repository ID")],
+    branch: Annotated[str, typer.Argument(help="Branch to resolve")],
+    url: Annotated[str, typer.Option(help="API Base URL")] = "http://localhost:8000",
+):
+    """
+    Resolve the latest completed sync for a repository branch.
+    """
+    full_url = f"{url.rstrip('/')}/repositories/resolve-branch"
+    payload = {"repository_id": repository_id, "branch": branch}
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            response = client.post(full_url, json=payload)
+            typer.echo(f"Status: {response.status_code}")
+            typer.echo("Response Body:")
+            typer.echo(json.dumps(response.json(), indent=2))
+    except Exception as e:
+        typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
+
+
+@app.command()
+def review_branch(
+    repository_id: Annotated[str, typer.Argument(help="Repository ID")],
+    branch: Annotated[str, typer.Argument(help="Branch to review against main")],
+    url: Annotated[str, typer.Option(help="API Base URL")] = "http://localhost:8000",
+):
+    """
+    Request a review for a branch against main.
+    """
+    full_url = f"{url.rstrip('/')}/repositories/review"
+    payload = {"repository_id": repository_id, "branch": branch}
+
+    try:
+        with httpx.Client(timeout=60.0 * 3) as client:
+            response = client.post(full_url, json=payload)
+            typer.echo(f"Status: {response.status_code}")
+            typer.echo("Response Body:")
+            typer.echo(json.dumps(response.json(), indent=2))
     except Exception as e:
         typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
 

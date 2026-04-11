@@ -36,7 +36,9 @@ class RunReadFileNode:
 
         try:
             read_res = await self._tool_service.read_file(
-                repository_id=repo_id, path=path
+                repository_id=repo_id,
+                repository_sync_id=state["scope"].repository_sync_id,
+                path=path,
             )
             tool_output = f"Content of {read_res.path}:\n\n{read_res.content}"
             if len(tool_output) > 8000:

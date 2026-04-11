@@ -16,6 +16,7 @@ from app.agentic.application.nodes.rewrite_question import RewriteQuestionNode
 from app.agentic.application.nodes.run_find_files import RunFindFilesNode
 from app.agentic.application.nodes.run_rag import RunRagNode
 from app.agentic.application.nodes.run_read_file import RunReadFileNode
+from app.agentic.application.nodes.run_review_branch import RunReviewBranchNode
 from app.agentic.application.nodes.run_search_in_repo import (
     RunSearchInRepoNode,
 )
@@ -56,6 +57,15 @@ async def test_graph_chat_service_logic():
     mock_retriever.retrieve.return_value = [chunk]
 
     mock_tool_service = MagicMock()
+    mock_review_service = AsyncMock()
+    mock_review_service.execute.return_value = MagicMock(
+        base_branch="main",
+        branch="feature/test",
+        base_sync_id=uuid4(),
+        head_sync_id=uuid4(),
+        summary="No findings.",
+        findings=[],
+    )
 
     # Mock Rewriter
     mock_rewriter = MagicMock()
@@ -68,6 +78,7 @@ async def test_graph_chat_service_logic():
         rag_node=RunRagNode(mock_retriever),
         find_files_node=RunFindFilesNode(mock_tool_service),
         read_file_node=RunReadFileNode(mock_tool_service),
+        review_branch_node=RunReviewBranchNode(mock_review_service),
         search_in_repo_node=RunSearchInRepoNode(mock_tool_service),
         evaluate_node=EvaluateEvidenceNode(),
         answer_node=AnswerFromContextNode(mock_llm),

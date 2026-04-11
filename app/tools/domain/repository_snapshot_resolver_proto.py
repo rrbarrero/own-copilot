@@ -5,9 +5,14 @@ from app.tools.domain.models import RepositorySnapshotRange
 
 
 class RepositorySnapshotResolverProto(Protocol):
-    async def resolve(self, repository_id: UUID) -> RepositorySnapshotRange:
+    async def resolve(
+        self,
+        repository_id: UUID,
+        repository_sync_id: UUID | None = None,
+    ) -> RepositorySnapshotRange:
         """
-        Locates the latest completed snapshot for the given repository.
+        Locates a concrete snapshot for the given repository.
+        If repository_sync_id is not provided, resolves the latest completed snapshot.
         Returns the snapshot range containing paths and IDs.
         Raises RepositoryNotFoundError or RepositorySnapshotNotFoundError.
         """

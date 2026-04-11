@@ -24,12 +24,15 @@ class RepositoryToolService:
         query: str | None = None,
         extensions: list[str] | None = None,
         limit: int = 50,
+        *,
+        repository_sync_id: UUID | None = None,
     ) -> list[FileMatch]:
         """
         Finds files in the repository snapshot matching criteria.
         """
         return await self._find_files.execute(
             repository_id=repository_id,
+            repository_sync_id=repository_sync_id,
             path_prefix=path_prefix,
             query=query,
             extensions=extensions,
@@ -41,12 +44,15 @@ class RepositoryToolService:
         repository_id: UUID,
         path: str,
         max_chars: int = 20000,
+        *,
+        repository_sync_id: UUID | None = None,
     ) -> ReadFileResult:
         """
         Reads a single file from the repository snapshot.
         """
         return await self._read_file.execute(
             repository_id=repository_id,
+            repository_sync_id=repository_sync_id,
             path=path,
             max_chars=max_chars,
         )
@@ -59,12 +65,15 @@ class RepositoryToolService:
         extensions: list[str] | None = None,
         case_sensitive: bool = False,
         limit: int = 50,
+        *,
+        repository_sync_id: UUID | None = None,
     ) -> list[SearchMatch]:
         """
         Searches for a literal query across text files in the repository snapshot.
         """
         return await self._search_in_repo.execute(
             repository_id=repository_id,
+            repository_sync_id=repository_sync_id,
             query=query,
             path_prefix=path_prefix,
             extensions=extensions,

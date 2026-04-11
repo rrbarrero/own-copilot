@@ -20,9 +20,11 @@ class SearchInRepo:
         extensions: list[str] | None = None,
         case_sensitive: bool = False,
         limit: int = 50,
+        *,
+        repository_sync_id: UUID | None = None,
     ) -> list[SearchMatch]:
         # 1. Resolve snapshot
-        snapshot = await self._resolver.resolve(repository_id)
+        snapshot = await self._resolver.resolve(repository_id, repository_sync_id)
 
         # 2. Determine base search path
         base_search_path = (

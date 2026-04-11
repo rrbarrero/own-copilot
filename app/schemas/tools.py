@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class FindFilesRequest(BaseModel):
     repository_id: UUID
+    repository_sync_id: UUID | None = None
     path_prefix: str | None = None
     query: str | None = None
     extensions: list[str] | None = None
@@ -26,6 +27,7 @@ class FindFilesResponse(BaseModel):
 
 class ReadFileRequest(BaseModel):
     repository_id: UUID
+    repository_sync_id: UUID | None = None
     path: str
     max_chars: int = Field(default=20000, ge=1, le=100000)
 
@@ -41,6 +43,7 @@ class ReadFileResponse(BaseModel):
 
 class SearchInRepoRequest(BaseModel):
     repository_id: UUID
+    repository_sync_id: UUID | None = None
     query: str
     path_prefix: str | None = None
     extensions: list[str] | None = None

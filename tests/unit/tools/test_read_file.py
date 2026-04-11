@@ -58,3 +58,18 @@ class TestReadFile:
     async def test_prevent_path_traversal(self):
         with pytest.raises(InvalidRepositoryPathError):
             await self.tool.execute(self.repository_id, "../outside.py")
+
+    @pytest.mark.asyncio
+    async def test_uses_explicit_repository_sync_id(self):
+        explicit_sync_id = uuid4()
+
+        await self.tool.execute(
+            self.repository_id,
+            repository_sync_id=explicit_sync_id,
+            path=self.file_path,
+        )
+
+        self.mock_resolver.resolve.assert_awaited_with(
+            self.repository_id,
+            explicit_sync_id,
+        )

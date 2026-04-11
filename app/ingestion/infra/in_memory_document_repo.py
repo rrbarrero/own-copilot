@@ -42,11 +42,32 @@ class InMemoryDocumentRepo(DocumentRepoProto):
                 return doc
         return None
 
+    async def get_by_repository_branch_and_source_id(
+        self, repository_id: UUID, branch: str, source_id: str
+    ) -> Document | None:
+        for doc in self._documents.values():
+            if (
+                doc.repository_id == repository_id
+                and doc.branch == branch
+                and doc.source_id == source_id
+            ):
+                return doc
+        return None
+
     async def list_by_repository_id(self, repository_id: UUID) -> list[Document]:
         return [
             doc
             for doc in self._documents.values()
             if doc.repository_id == repository_id
+        ]
+
+    async def list_by_repository_and_branch(
+        self, repository_id: UUID, branch: str
+    ) -> list[Document]:
+        return [
+            doc
+            for doc in self._documents.values()
+            if doc.repository_id == repository_id and doc.branch == branch
         ]
 
     async def list_all(self) -> list[Document]:

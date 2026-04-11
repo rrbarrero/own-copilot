@@ -41,6 +41,7 @@ class RunSearchInRepoNode:
 
         matches = await self._tool_service.search_in_repo(
             repository_id=repo_id,
+            repository_sync_id=state["scope"].repository_sync_id,
             query=query,
             extensions=extensions,
             limit=limit,

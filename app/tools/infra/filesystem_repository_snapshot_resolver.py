@@ -22,24 +22,37 @@ class FilesystemRepositorySnapshotResolver:
         self._sync_repo = sync_repo
         self._storage_path = storage_path
 
-    async def resolve(self, repository_id: UUID) -> RepositorySnapshotRange:
+    async def resolve(
+        self,
+        repository_id: UUID,
+        repository_sync_id: UUID | None = None,
+    ) -> RepositorySnapshotRange:
         # 1. Verify repository exists
         repo = await self._repository_repo.get_by_id(repository_id)
         if not repo:
             raise RepositoryNotFoundError(repository_id)
 
-        # 2. Find the last COMPLETED sync
-        syncs = await self._sync_repo.list_by_repository_id(repository_id)
-        last_completed = next(
-            (s for s in syncs if s.status == RepositorySyncStatus.COMPLETED), None
-        )
+        # 2. Resolve the snapshot to use
+        if repository_sync_id is not None:
+            resolved_sync = await self._sync_repo.get_by_id(repository_sync_id)
+            if (
+                not resolved_sync
+                or resolved_sync.repository_id != repository_id
+                or resolved_sync.status != RepositorySyncStatus.COMPLETED
+            ):
+                raise RepositorySnapshotNotFoundError(repository_id)
+        else:
+            syncs = await self._sync_repo.list_by_repository_id(repository_id)
+            resolved_sync = next(
+                (s for s in syncs if s.status == RepositorySyncStatus.COMPLETED), None
+            )
 
-        if not last_completed:
+        if not resolved_sync:
             raise RepositorySnapshotNotFoundError(repository_id)
 
         # 3. Resolve path: storage/repositories/{repository_id}/{sync_id}/
         # Using the same convention as InFilesystemStorageRepo
-        snapshot_rel_path = f"repositories/{repository_id}/{last_completed.id}"
+        snapshot_rel_path = f"repositories/{repository_id}/{resolved_sync.id}"
         snapshot_abs_path = os.path.join(self._storage_path, snapshot_rel_path)
 
         # 4. Check if directory exists
@@ -48,6 +61,6 @@ class FilesystemRepositorySnapshotResolver:
 
         return RepositorySnapshotRange(
             repository_id=repository_id,
-            sync_id=last_completed.id,
+            sync_id=resolved_sync.id,
             root_path=snapshot_abs_path,
         )

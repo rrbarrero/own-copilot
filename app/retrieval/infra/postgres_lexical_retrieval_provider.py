@@ -189,6 +189,9 @@ class PostgresLexicalRetrievalProvider:
             if scope.type == ScopeType.REPOSITORY:
                 query += " AND d.repository_id = %(repository_id)s"
                 params["repository_id"] = str(scope.repository_id)
+                if scope.repository_sync_id:
+                    query += " AND d.repository_sync_id = %(repository_sync_id)s"
+                    params["repository_sync_id"] = str(scope.repository_sync_id)
             elif scope.type == ScopeType.DOCUMENT:
                 query += " AND d.uuid = %(document_uuid)s"
                 params["document_uuid"] = str(scope.document_id)

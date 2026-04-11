@@ -19,9 +19,11 @@ class FindFiles:
         query: str | None = None,
         extensions: list[str] | None = None,
         limit: int = 50,
+        *,
+        repository_sync_id: UUID | None = None,
     ) -> list[FileMatch]:
         # 1. Resolve snapshot
-        snapshot = await self._resolver.resolve(repository_id)
+        snapshot = await self._resolver.resolve(repository_id, repository_sync_id)
 
         # 2. Determine base search path
         base_search_path = (

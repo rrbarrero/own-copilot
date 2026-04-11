@@ -104,3 +104,29 @@ class TestRepositorySnapshotResolver:
         # Directory NOT created
         with pytest.raises(RepositorySnapshotNotFoundError):
             await self.resolver.resolve(self.repo_id)
+
+    @pytest.mark.asyncio
+    async def test_resolve_specific_sync_success(self):
+        self.repository_repo.get_by_id.return_value = MagicMock(id=self.repo_id)
+        sync_completed = RepositorySync(
+            id=self.sync_id,
+            repository_id=self.repo_id,
+            branch="feature/test",
+            status=RepositorySyncStatus.COMPLETED,
+            started_at=datetime.now(),
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+        self.sync_repo.get_by_id.return_value = sync_completed
+
+        snapshot_path = os.path.join(
+            self.test_dir, f"repositories/{self.repo_id}/{self.sync_id}"
+        )
+        os.makedirs(snapshot_path)
+
+        result = await self.resolver.resolve(
+            self.repo_id, repository_sync_id=self.sync_id
+        )
+
+        assert result.sync_id == self.sync_id
+        self.sync_repo.get_by_id.assert_awaited_once_with(self.sync_id)

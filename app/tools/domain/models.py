@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import StrEnum
 from uuid import UUID
 
 
@@ -23,3 +24,27 @@ class RepositorySnapshotRange:
     repository_id: UUID
     sync_id: UUID
     root_path: str
+
+
+class DiffChangeType(StrEnum):
+    ADDED = "added"
+    MODIFIED = "modified"
+    DELETED = "deleted"
+
+
+@dataclass(frozen=True)
+class RepositoryFileDiff:
+    path: str
+    change_type: DiffChangeType
+    unified_diff: str
+    additions: int
+    deletions: int
+    is_binary: bool = False
+
+
+@dataclass(frozen=True)
+class RepositoryDiffResult:
+    repository_id: UUID
+    base_sync_id: UUID
+    head_sync_id: UUID
+    file_diffs: list[RepositoryFileDiff]

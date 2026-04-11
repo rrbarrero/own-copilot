@@ -57,12 +57,13 @@ class SyncRepositoryJobHandler(JobHandlerProto):
         # 1. Checkout repository
         branch = job.payload.get("branch") or repo.default_branch or "main"
         checkout_info = await self._git_service.ensure_checkout(repo, branch)
+        resolved_branch = checkout_info.branch
 
         # 2. Create RepositorySync record
         sync = RepositorySync(
             id=uuid.uuid4(),
             repository_id=repo.id,
-            branch=checkout_info.branch,
+            branch=resolved_branch,
             commit_sha=checkout_info.commit_sha,
             status=RepositorySyncStatus.RUNNING,
             started_at=datetime.now(UTC),
@@ -77,14 +78,27 @@ class SyncRepositoryJobHandler(JobHandlerProto):
             sync.scanned_files = len(scanned_files)
 
             seen_doc_uuids = set()
+            branch_docs = await self._document_repo.list_by_repository_and_branch(
+                repo.id, resolved_branch
+            )
+            branch_docs_by_source = {
+                doc.source_id: doc for doc in branch_docs
+            }
 
             for scanned_file in scanned_files:
                 # 4. Find existing document
-                doc = await self._document_repo.get_by_repository_and_source_id(
-                    repo.id, scanned_file.relative_path
-                )
+                doc = branch_docs_by_source.get(scanned_file.relative_path)
 
-                # 5. Determine if it needs re-indexing
+                # 5. Materialize the full snapshot in storage for this sync
+                snapshot_path = (
+                    f"repositories/{repo.id}/{sync.id}/{scanned_file.relative_path}"
+                )
+                with open(scanned_file.absolute_path, "rb") as f:
+                    content_bytes = f.read()
+
+                await self._storage_repo.save(snapshot_path, content_bytes)
+
+                # 6. Determine if it needs re-indexing
                 is_new = doc is None
                 is_changed = (
                     doc is not None and doc.content_hash != scanned_file.content_hash
@@ -109,7 +123,7 @@ class SyncRepositoryJobHandler(JobHandlerProto):
                             language=scanned_file.language,
                             repository_id=repo.id,
                             repository_url=repo.clone_url,
-                            branch=checkout_info.branch,
+                            branch=resolved_branch,
                             content_hash=scanned_file.content_hash,
                             repository_sync_id=sync.id,
                         )
@@ -122,15 +136,7 @@ class SyncRepositoryJobHandler(JobHandlerProto):
                         # Reset to pending for re-indexing
                         doc.processing_status = DocumentStatus.QUEUED
                         doc.repository_sync_id = sync.id
-
-                    # 6. Materialize snapshot in storage
-                    snapshot_path = (
-                        f"repositories/{repo.id}/{sync.id}/{scanned_file.relative_path}"
-                    )
-                    with open(scanned_file.absolute_path, "rb") as f:
-                        content_bytes = f.read()
-
-                    await self._storage_repo.save(snapshot_path, content_bytes)
+                        doc.branch = resolved_branch
                     doc.path = snapshot_path
 
                     await self._document_repo.save(doc)
@@ -139,13 +145,17 @@ class SyncRepositoryJobHandler(JobHandlerProto):
                     await self._processing_service.process(
                         doc.uuid, correlation_id=sync.id
                     )
+                elif doc is not None:
+                    doc.path = snapshot_path
+                    doc.repository_sync_id = sync.id
+                    doc.updated_at = datetime.now(UTC)
+                    await self._document_repo.save(doc)
 
                 if doc:
                     seen_doc_uuids.add(doc.uuid)
 
-            # 8. Mark for deletion documents not seen in this sync
-            all_repo_docs = await self._document_repo.list_by_repository_id(repo.id)
-            for old_doc in all_repo_docs:
+            # 8. Mark for deletion documents not seen in this branch sync
+            for old_doc in branch_docs:
                 if old_doc.uuid not in seen_doc_uuids:
                     await self._document_repo.delete_by_uuids([old_doc.uuid])
                     sync.deleted_files += 1

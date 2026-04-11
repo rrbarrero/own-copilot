@@ -37,10 +37,13 @@ async def find_files(
 ):
     try:
         # Resolve snapshot to get metadata (sync_id)
-        snapshot = await resolver.resolve(request.repository_id)
+        snapshot = await resolver.resolve(
+            request.repository_id, request.repository_sync_id
+        )
 
         files = await tool_service.find_files(
             repository_id=request.repository_id,
+            repository_sync_id=request.repository_sync_id,
             path_prefix=request.path_prefix,
             query=request.query,
             extensions=request.extensions,
@@ -66,6 +69,7 @@ async def read_file(
     try:
         result = await tool_service.read_file(
             repository_id=request.repository_id,
+            repository_sync_id=request.repository_sync_id,
             path=request.path,
             max_chars=request.max_chars,
         )
@@ -94,10 +98,13 @@ async def search_in_repo(
 ):
     try:
         # Resolve snapshot to get metadata
-        snapshot = await resolver.resolve(request.repository_id)
+        snapshot = await resolver.resolve(
+            request.repository_id, request.repository_sync_id
+        )
 
         matches = await tool_service.search_in_repo(
             repository_id=request.repository_id,
+            repository_sync_id=request.repository_sync_id,
             query=request.query,
             path_prefix=request.path_prefix,
             extensions=request.extensions,

@@ -149,6 +149,23 @@ class PostgresDocumentRepo(DocumentRepoProto):
             row = await cur.fetchone()
             return document_row_adapter(row) if row else None
 
+    async def get_by_repository_branch_and_source_id(
+        self, repository_id: UUID, branch: str, source_id: str
+    ) -> Document | None:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                """
+                SELECT * FROM documents
+                WHERE repository_id = %s AND branch = %s AND source_id = %s
+                """,
+                (str(repository_id), branch, source_id),
+            )
+            row = await cur.fetchone()
+            return document_row_adapter(row) if row else None
+
     async def list_by_repository_id(self, repository_id: UUID) -> list[Document]:
         async with (
             self._pool.connection() as conn,
@@ -157,6 +174,23 @@ class PostgresDocumentRepo(DocumentRepoProto):
             await cur.execute(
                 "SELECT * FROM documents WHERE repository_id = %s",
                 (str(repository_id),),
+            )
+            rows = await cur.fetchall()
+            return [document_row_adapter(row) for row in rows]
+
+    async def list_by_repository_and_branch(
+        self, repository_id: UUID, branch: str
+    ) -> list[Document]:
+        async with (
+            self._pool.connection() as conn,
+            conn.cursor(row_factory=dict_row) as cur,
+        ):
+            await cur.execute(
+                """
+                SELECT * FROM documents
+                WHERE repository_id = %s AND branch = %s
+                """,
+                (str(repository_id), branch),
             )
             rows = await cur.fetchall()
             return [document_row_adapter(row) for row in rows]

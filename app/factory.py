@@ -14,6 +14,7 @@ from app.agentic.application.nodes.rewrite_question import RewriteQuestionNode
 from app.agentic.application.nodes.run_find_files import RunFindFilesNode
 from app.agentic.application.nodes.run_rag import RunRagNode
 from app.agentic.application.nodes.run_read_file import RunReadFileNode
+from app.agentic.application.nodes.run_review_branch import RunReviewBranchNode
 from app.agentic.application.nodes.run_search_in_repo import (
     RunSearchInRepoNode,
 )
@@ -38,6 +39,12 @@ from app.ingestion.infra.postgres_document_repo import PostgresDocumentRepo
 from app.ingestion.infra.postgres_job_repo import PostgresJobRepo
 from app.repositories.application.request_repository_sync import (
     RequestRepositorySync,
+)
+from app.repositories.application.resolve_repository_branch_sync import (
+    ResolveRepositoryBranchSync,
+)
+from app.repositories.application.review_repository_branch_against_main import (
+    ReviewRepositoryBranchAgainstMain,
 )
 from app.repositories.domain.repository_repo_proto import RepositoryRepoProto
 from app.repositories.domain.repository_sync_repo_proto import (
@@ -66,6 +73,7 @@ from app.retrieval.infra.postgres_vector_retrieval_provider import (
 )
 from app.retrieval.infra.rrf_rank_fuser import RRFRankFuser
 from app.tools.application.find_files import FindFiles
+from app.tools.application.diff_between_syncs import DiffBetweenSyncs
 from app.tools.application.read_file import ReadFile
 from app.tools.application.repository_tool_service import RepositoryToolService
 from app.tools.application.search_in_repo import SearchInRepo
@@ -110,6 +118,29 @@ def create_request_repository_sync() -> RequestRepositorySync:
         url_normalizer=RepositoryUrlNormalizer(),
         # Use STORAGE_PATH/checkouts for git roots
         checkouts_root=f"{settings.STORAGE_PATH}/checkouts",
+    )
+
+
+@lru_cache
+def create_resolve_repository_branch_sync() -> ResolveRepositoryBranchSync:
+    return ResolveRepositoryBranchSync(
+        sync_repo=create_repository_sync_repo(),
+    )
+
+
+@lru_cache
+def create_diff_between_syncs() -> DiffBetweenSyncs:
+    return DiffBetweenSyncs(
+        resolver=create_repository_snapshot_resolver(),
+    )
+
+
+@lru_cache
+def create_review_repository_branch_against_main():
+    return ReviewRepositoryBranchAgainstMain(
+        sync_repo=create_repository_sync_repo(),
+        diff_service=create_diff_between_syncs(),
+        llm=create_llm(),
     )
 
 
@@ -175,6 +206,9 @@ def create_langgraph():
         rag_node=RunRagNode(create_retriever()),
         find_files_node=RunFindFilesNode(tool_service),
         read_file_node=RunReadFileNode(tool_service),
+        review_branch_node=RunReviewBranchNode(
+            create_review_repository_branch_against_main()
+        ),
         search_in_repo_node=RunSearchInRepoNode(tool_service),
         evaluate_node=EvaluateEvidenceNode(),
         answer_node=AnswerFromContextNode(llm),

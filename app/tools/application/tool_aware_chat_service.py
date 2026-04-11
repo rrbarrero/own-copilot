@@ -60,14 +60,18 @@ class ToolAwareChatService(ChatService):
         try:
             if decision.strategy == "find_files":
                 files = await self._tool_service.find_files(
-                    repository_id=repo_id, **decision.parameters
+                    repository_id=repo_id,
+                    repository_sync_id=request.scope.repository_sync_id,
+                    **decision.parameters,
                 )
                 items = [f"- {f.path} ({f.size_bytes} bytes)" for f in files]
                 tool_output = "\n".join(items) or "No files found."
 
             elif decision.strategy == "read_file":
                 read_res = await self._tool_service.read_file(
-                    repository_id=repo_id, **decision.parameters
+                    repository_id=repo_id,
+                    repository_sync_id=request.scope.repository_sync_id,
+                    **decision.parameters,
                 )
                 tool_output = f"Content of {read_res.path}:\n\n{read_res.content}"
                 if read_res.truncated:
@@ -75,7 +79,9 @@ class ToolAwareChatService(ChatService):
 
             elif decision.strategy == "search_in_repo":
                 matches = await self._tool_service.search_in_repo(
-                    repository_id=repo_id, **decision.parameters
+                    repository_id=repo_id,
+                    repository_sync_id=request.scope.repository_sync_id,
+                    **decision.parameters,
                 )
                 items = [f"{m.path}:{m.line_number}: {m.line_content}" for m in matches]
                 tool_output = "\n".join(items) or "No results found."

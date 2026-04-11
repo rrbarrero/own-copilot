@@ -193,3 +193,131 @@ async def test_full_repo_sync_orchestration_flow(db_url):
 
     # Clean up
     shutil.rmtree(mock_repo_path)
+
+
+@pytest.mark.asyncio
+async def test_sync_keeps_branch_documents_isolated(db_url):
+    mock_repo_path = "/tmp/mock-repo-branches"
+    os.makedirs(mock_repo_path, exist_ok=True)
+    with open(f"{mock_repo_path}/shared.txt", "w") as f:
+        f.write("main content")
+
+    async with psycopg_pool.AsyncConnectionPool(db_url) as pool:
+        repo_repo = PostgresRepositoryRepo(pool)
+        sync_repo = PostgresRepositorySyncRepo(pool)
+        doc_repo = PostgresDocumentRepo(pool)
+        job_repo = PostgresJobRepo(pool)
+
+        class MockUrlInfo:
+            normalized_url = "https://github.com/mock/branches"
+            owner = "mock"
+            name = "branches"
+
+        mock_normalizer = MagicMock()
+        mock_normalizer.normalize.return_value = MockUrlInfo()
+
+        service = RequestRepositorySync(
+            repository_repo=repo_repo,
+            job_repo=job_repo,
+            url_normalizer=mock_normalizer,
+            checkouts_root="/tmp/checkouts",
+        )
+
+        result = await service.execute("https://github.com/mock/branches", branch="main")
+        saved_repo = await repo_repo.get_by_id(result.repository_id)
+        saved_job = await job_repo.get_by_id(result.job_id)
+        assert saved_repo is not None
+        assert saved_job is not None
+
+        git_service = AsyncMock()
+        scanner = MagicMock()
+        processing_service = AsyncMock()
+        storage_repo = AsyncMock()
+
+        handler = SyncRepositoryJobHandler(
+            repository_repo=repo_repo,
+            sync_repo=sync_repo,
+            git_service=git_service,
+            scanner=scanner,
+            document_repo=doc_repo,
+            storage_repo=storage_repo,
+            processing_service=processing_service,
+        )
+
+        git_service.ensure_checkout.return_value = CheckoutInfo(
+            local_path=mock_repo_path,
+            branch="main",
+            commit_sha="sha-main",
+        )
+        scanner.scan.return_value = iter(
+            [
+                ScannedRepositoryFile(
+                    relative_path="shared.txt",
+                    absolute_path=f"{mock_repo_path}/shared.txt",
+                    filename="shared.txt",
+                    extension="txt",
+                    doc_type=DocumentType.TEXT,
+                    size_bytes=len("main content"),
+                    content_hash="main-hash",
+                )
+            ]
+        )
+
+        await handler.handle(saved_job)
+
+        with open(f"{mock_repo_path}/shared.txt", "w") as f:
+            f.write("feature content")
+
+        feature_job = Job(
+            id=uuid.uuid4(),
+            queue_name="ingestion",
+            job_type="sync_repository",
+            payload={
+                "repository_id": str(saved_repo.id),
+                "branch": "feature/review-me",
+            },
+            status=JobStatus.PENDING,
+            attempts=0,
+            max_attempts=3,
+            run_at=datetime.now(UTC),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+            priority=0,
+        )
+
+        git_service.ensure_checkout.return_value = CheckoutInfo(
+            local_path=mock_repo_path,
+            branch="feature/review-me",
+            commit_sha="sha-feature",
+        )
+        scanner.scan.return_value = iter(
+            [
+                ScannedRepositoryFile(
+                    relative_path="shared.txt",
+                    absolute_path=f"{mock_repo_path}/shared.txt",
+                    filename="shared.txt",
+                    extension="txt",
+                    doc_type=DocumentType.TEXT,
+                    size_bytes=len("feature content"),
+                    content_hash="feature-hash",
+                )
+            ]
+        )
+
+        await handler.handle(feature_job)
+
+        docs = await doc_repo.list_by_repository_id(saved_repo.id)
+        assert len(docs) == 2
+
+        docs_by_branch = {doc.branch: doc for doc in docs}
+        assert docs_by_branch["main"].content_hash == "main-hash"
+        assert docs_by_branch["feature/review-me"].content_hash == "feature-hash"
+
+        main_docs = await doc_repo.list_by_repository_and_branch(saved_repo.id, "main")
+        feature_docs = await doc_repo.list_by_repository_and_branch(
+            saved_repo.id, "feature/review-me"
+        )
+        assert len(main_docs) == 1
+        assert len(feature_docs) == 1
+
+    shutil.rmtree(mock_repo_path)

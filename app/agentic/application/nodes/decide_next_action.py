@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -25,8 +26,14 @@ class DecideNextActionNode:
         "3. read_file: Use this to read the full content of a specific file.\n"
         "4. search_in_repo: Use this for exact text or symbol search (grep) across "
         "the repo.\n"
-        "5. answer: Use this ONLY when you have enough evidence to answer fully.\n\n"
+        "5. review_branch: Use this when the user asks for a code review of a "
+        "specific branch against main.\n"
+        "6. answer: Use this ONLY when you have enough evidence to answer fully.\n\n"
         "Return ONLY a JSON object with: strategy, parameters (dict), and reasoning."
+    )
+    _BRANCH_RE = re.compile(
+        r"(?:branch|rama)\s+['\"`]?([A-Za-z0-9._/\-]+)['\"`]?",
+        re.IGNORECASE,
     )
 
     def __init__(self, llm: BaseChatModel, max_steps: int = 4):
@@ -51,6 +58,25 @@ class DecideNextActionNode:
             has_context,
             previous_strategies,
         )
+
+        review_branch = self._extract_review_branch(
+            state["rewritten_question"] or state["original_question"]
+        )
+        if review_branch and not previous_strategies:
+            logger.info(
+                "graph_node.decide.result conversation_id=%s strategy=review_branch "
+                "branch=%r reason=detected_review_request",
+                state["conversation_id"],
+                review_branch,
+            )
+            return {
+                "current_strategy": "review_branch",
+                "tool_calls": state["tool_calls"]
+                + [{"strategy": "review_branch", "parameters": {"branch": review_branch}}],
+                "reasoning_trace": state["reasoning_trace"]
+                + [f"Detected branch review request for {review_branch}."],
+                "step_count": state["step_count"] + 1,
+            }
 
         if not has_context and not previous_strategies:
             logger.info(
@@ -162,3 +188,18 @@ class DecideNextActionNode:
             + [f"Action: {strategy} ({reasoning})"],
             "step_count": state["step_count"] + 1,
         }
+
+    def _extract_review_branch(self, question: str) -> str | None:
+        lowered = question.lower()
+        mentions_review = any(
+            token in lowered
+            for token in ("review", "code review", "revisa", "revision", "review de")
+        )
+        mentions_branch = "branch" in lowered or "rama" in lowered
+        if not (mentions_review and mentions_branch):
+            return None
+
+        match = self._BRANCH_RE.search(question)
+        if not match:
+            return None
+        return match.group(1).strip()

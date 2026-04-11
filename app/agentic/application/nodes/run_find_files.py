@@ -41,6 +41,7 @@ class RunFindFilesNode:
 
         matches = await self._tool_service.find_files(
             repository_id=repo_id,
+            repository_sync_id=state["scope"].repository_sync_id,
             query=query,
             extensions=extensions,
             limit=limit,

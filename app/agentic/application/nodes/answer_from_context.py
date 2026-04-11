@@ -38,6 +38,18 @@ class AnswerFromContextNode:
             len(state.get("citations", [])),
         )
 
+        if state.get("answer"):
+            logger.info(
+                "graph_node.answer.done conversation_id=%s "
+                "result=passthrough_prepared_answer",
+                state["conversation_id"],
+            )
+            return {
+                "answer": str(state["answer"]),
+                "reasoning_trace": state["reasoning_trace"]
+                + ["Returned prepared answer without extra synthesis."],
+            }
+
         if not context.strip():
             logger.info(
                 "graph_node.answer.done conversation_id=%s "

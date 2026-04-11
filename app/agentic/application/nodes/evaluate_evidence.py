@@ -23,6 +23,7 @@ class EvaluateEvidenceNode:
         tool_ctx = state.get("tool_context") or ""
         has_context = bool(retrieved.strip() or tool_ctx.strip())
         at_limit = state["step_count"] >= self._max_steps
+        has_prepared_answer = bool((state.get("answer") or "").strip())
 
         # Determine logical "done" if we are at limit or think we have enough
         # The LLM in DecideNextActionNode already suggests "answer" strategy,
@@ -41,10 +42,11 @@ class EvaluateEvidenceNode:
             state["step_count"],
             has_context,
             state["current_strategy"],
-            at_limit or state["current_strategy"] == "answer",
+            at_limit or state["current_strategy"] == "answer" or has_prepared_answer,
         )
 
         return {
             "reasoning_trace": reasoning,
-            "done": at_limit or state["current_strategy"] == "answer",
+            "done": at_limit or state["current_strategy"] == "answer"
+            or has_prepared_answer,
         }
