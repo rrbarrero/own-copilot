@@ -117,6 +117,11 @@ time uv run python scripts/api_client.py review-branch  new-feature-branch  0,24
 - That kind of multi-agent workflow would benefit from strong observability, so
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
+- Another idea worth studying would be to synchronize repositories in the
+  background on developers' workstations, so the ingestion process can be
+  partially warmed up in advance by embedding changed files incrementally. This
+  could be an option to evaluate depending on the overall system load and the
+  operational cost profile.
 
 ## Steps to reproduce
 
