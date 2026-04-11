@@ -7,42 +7,12 @@ range. In a CI-oriented workflow, the same capability can be used as an
 automated review step before merge, and later extended with sandboxed
 execution, remediation agents, and validation stages.
 
-## How it works
-
-1. Synchronize `main`.
-2. Synchronize the target branch.
-3. Resolve the latest completed snapshots for both branches.
-4. Compute the diff between `main` and the target branch.
-5. Generate structured review findings with severity, file path, and line range.
-
-## Example
-
-```bash
-# Synchronize the default branch (typically main) and register the repository.
-uv run python scripts/api_client.py sync-repo https://github.com/rrbarrero/credit-fraud.git
-
-# Synchronize the feature branch that will be reviewed against main.(1)
-uv run python scripts/api_client.py sync-repo \
-  https://github.com/rrbarrero/credit-fraud.git \
-  --branch new-model-llm-evaluation
-
-# Run the branch review using the repository ID and the target branch name.
+## Run the branch review using the repository ID and the target branch name.
+```
 uv run python scripts/api_client.py review-branch \
   e2196e4e-fc51-46ec-aeff-f56cc36e08cd \
-  new-model-llm-evaluation
+  new-feature-branch
 ```
-
-What each command does:
-
-- `uv run python scripts/api_client.py sync-repo <repo-url>` enqueues a sync for
-  the repository default branch so the system has a `main` snapshot to compare
-  against.
-- `uv run python scripts/api_client.py sync-repo <repo-url> --branch <branch>`
-  enqueues a second sync for the feature branch that you want to inspect.
-- `uv run python scripts/api_client.py review-branch <repository-id> <branch>`
-  resolves the latest completed syncs for `main` and the target branch,
-  computes the diff between both snapshots, and asks the LLM to produce
-  structured review findings.
 
 ## Example response
 
@@ -52,7 +22,7 @@ This is a real and functional response produced by the current implementation.
 {
   "repository_id": "e2196e4e-fc51-46ec-aeff-f56cc36e08cd",
   "base_branch": "main",
-  "branch": "new-model-llm-evaluation",
+  "branch": "new-feature-branch",
   "base_sync_id": "bf2525fe-afbb-4bcd-aa75-61c0b0b75fea",
   "head_sync_id": "f09c868e-09fd-4405-88e3-c3efea430295",
   "summary": "The diff introduces a new RandomForestModel and updates dependencies. The main change is adding seaborn as a dependency, which is not used in the new model code. Other changes are correct additions and modifications.",
