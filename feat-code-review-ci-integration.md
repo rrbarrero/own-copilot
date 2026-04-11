@@ -117,7 +117,7 @@ as `Haz una review de la rama new-model-llm-evaluation`.
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
 
-## Reproduce
+## Steps to reproduce
 
 ### 1. Clone the repository
 
