@@ -76,6 +76,10 @@ as `Haz una review de la rama new-model-llm-evaluation`.
 
 - This branch review flow is implemented as a study case to validate the
   product direction.
+- The example shown here was executed on a low-end GPU setup, specifically an
+  NVIDIA RTX 3070 Ti with 8 GB of VRAM, so the model used in practice was
+  chosen as a validation vehicle for the idea rather than as the strongest
+  possible model for the task.
 - It is an adaptation built on top of the architecture that already existed in
   the project to make room for this feature.
 - Repository and branch synchronization were not originally designed for this
