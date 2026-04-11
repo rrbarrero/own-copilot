@@ -1,0 +1,130 @@
+# Feature: Code Review CI Integration
+
+The assistant can review a repository branch against `main` using synchronized
+repository snapshots instead of generic model memory.
+
+## How it works
+
+1. Synchronize `main`.
+2. Synchronize the target branch.
+3. Resolve the latest completed snapshots for both branches.
+4. Compute the diff between `main` and the target branch.
+5. Generate structured review findings with severity, file path, and line range.
+
+## Example
+
+```bash
+# Synchronize the default branch (typically main) and register the repository.
+uv run python scripts/api_client.py sync-repo https://github.com/rrbarrero/credit-fraud.git
+
+# Synchronize the feature branch that will be reviewed against main.(1)
+uv run python scripts/api_client.py sync-repo \
+  https://github.com/rrbarrero/credit-fraud.git \
+  --branch new-model-llm-evaluation
+
+# Run the branch review using the repository ID and the target branch name.
+uv run python scripts/api_client.py review-branch \
+  e2196e4e-fc51-46ec-aeff-f56cc36e08cd \
+  new-model-llm-evaluation
+```
+
+What each command does:
+
+- `uv run python scripts/api_client.py sync-repo <repo-url>` enqueues a sync for
+  the repository default branch so the system has a `main` snapshot to compare
+  against.
+- `uv run python scripts/api_client.py sync-repo <repo-url> --branch <branch>`
+  enqueues a second sync for the feature branch that you want to inspect.
+- `uv run python scripts/api_client.py review-branch <repository-id> <branch>`
+  resolves the latest completed syncs for `main` and the target branch,
+  computes the diff between both snapshots, and asks the LLM to produce
+  structured review findings.
+
+## Example response
+
+This is a real and functional response produced by the current implementation.
+
+```json
+{
+  "repository_id": "e2196e4e-fc51-46ec-aeff-f56cc36e08cd",
+  "base_branch": "main",
+  "branch": "new-model-llm-evaluation",
+  "base_sync_id": "bf2525fe-afbb-4bcd-aa75-61c0b0b75fea",
+  "head_sync_id": "f09c868e-09fd-4405-88e3-c3efea430295",
+  "summary": "The diff introduces a new RandomForestModel and updates dependencies. The main change is adding seaborn as a dependency, which is not used in the new model code. Other changes are correct additions and modifications.",
+  "findings": [
+    {
+      "severity": "low",
+      "path": "pyproject.toml",
+      "title": "Unnecessary dependency added",
+      "rationale": "The 'seaborn' package is added to dependencies but not used in the new RandomForestModel code. This could be considered an unnecessary dependency.",
+      "line_start": 14,
+      "line_end": 14
+    }
+  ]
+}
+```
+
+You can also use the same capability through `/chat` or `repl` with prompts such
+as `Haz una review de la rama new-model-llm-evaluation`.
+
+## Notes
+
+- This branch review flow is implemented as a study case to validate the
+  product direction.
+- It is an adaptation built on top of the architecture that already existed in
+  the project to make room for this feature.
+- Repository and branch synchronization were not originally designed for this
+  use case, so the implementation works, but it is not the cleanest or most
+  optimal design for supporting branch review as a first-class capability.
+- In other words, this feature was integrated pragmatically into the current
+  system rather than introduced through a dedicated architecture designed for it
+  from the beginning.
+
+## Tradeoffs
+
+### Pros of a local LLM setup
+
+- Keeping repository snapshots in the local filesystem is materially cheaper
+  and faster than pushing the same workflow through external hosted
+  infrastructure.
+- Privacy is a primary constraint here: the current approach deliberately
+  favors keeping repository contents and review execution close to the local
+  environment.
+- Running a local LLM reduces dependency on third-party infrastructure and
+  avoids external API availability issues, provider-side incidents, and the
+  kind of recurring outages that frontier services such as Claude can have.
+- A local setup gives stronger control over model versioning, runtime behavior,
+  filesystem integration, and execution flow, which is especially useful for
+  repository-centric workflows.
+- Integration with a local sandbox is also more organic and simpler, because
+  the model, repository snapshots, execution environment, and validation tools
+  can live close to each other without crossing third-party boundaries.
+- Once the infrastructure is in place, the marginal cost of repeated reviews,
+  iterative prompts, and repository-heavy workflows is usually much lower than
+  with frontier APIs.
+
+### Cons of a local LLM setup
+
+- Local models usually provide lower peak quality than top-tier frontier models
+  for difficult reasoning, nuanced code review, and long-context synthesis.
+- A local stack pushes more operational burden onto the project: provisioning
+  hardware, managing GPU or CPU limits, tuning performance, handling
+  observability, and maintaining the full inference environment.
+- Frontier APIs such as Anthropic Claude can still outperform local models on
+  instruction-following, depth of reasoning, and robustness on harder review
+  tasks, so the tradeoff is not only cost and privacy, but also raw model
+  capability.
+
+## Next Step
+
+- The logical next step would be to add an execution sandbox so the model can
+  go beyond static review: generate new code, run the project, validate corner
+  cases, execute targeted checks, and test behavioral hypotheses safely.
+- In a CI-oriented integration, the review result could also drive follow-up
+  automation. For example, depending on the severity of a finding, another
+  agent could be responsible for attempting a fix, validating it, and pushing
+  a new update back to the branch.
+- That kind of multi-agent workflow would benefit from strong observability, so
+  the system can expose the progress of every stage: review, remediation,
+  validation, retries, and final outcome.
