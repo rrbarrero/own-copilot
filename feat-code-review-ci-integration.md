@@ -5,7 +5,9 @@ after synchronizing both branches, computing the diff between their snapshots,
 and generating structured findings with severity, affected file, and line
 range. In a CI-oriented workflow, the same capability can be used as an
 automated review step before merge, and later extended with sandboxed
-execution, remediation agents, and validation stages.
+execution, remediation agents, and validation stages. The current approach is
+based on a **PRIVACY FIRST self-hosted LLM**, following the set of premises and tradeoffs
+described later in this document.
 
 ## Run the branch review using the repository ID and the target branch name.
 ```
@@ -37,10 +39,9 @@ This is a real and functional response produced by the current implementation.
     }
   ]
 }
-```
 
-You can also use the same capability through `/chat` or `repl` with prompts such
-as `Haz una review de la rama new-model-llm-evaluation`.
+uv run python scripts/api_client.py review-branch  new-model-llm-evaluation  0,24s user 0,06s system 2% cpu 14,437 total
+```
 
 ## Notes
 
