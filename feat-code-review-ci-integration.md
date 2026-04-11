@@ -40,7 +40,7 @@ This is a real and functional response produced by the current implementation.
   ]
 }
 
-uv run python scripts/api_client.py review-branch  new-model-llm-evaluation  0,24s user 0,06s system 2% cpu 14,437 total
+uv run python scripts/api_client.py review-branch  new-feature-branch  0,24s user 0,06s system 2% cpu 14,437 total
 ```
 
 ## Notes
