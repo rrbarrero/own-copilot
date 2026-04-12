@@ -162,8 +162,12 @@ To https://github.com/rrbarrero/credit-fraud.git
 
 ### Cons of a local LLM setup
 
-- Local models usually provide lower peak quality than top-tier frontier models
-  for difficult reasoning, nuanced code review, and long-context synthesis.
+- Local models usually provide lower peak quality than top-tier frontier models 
+  for difficult reasoning, nuanced code review, and long-context synthesis, 
+  although there are powerful open-weight models specifically designed for 
+  coding that can be self-hosted — such as Qwen2.5-Coder-32B, which consistently 
+  ranks among the top open-source coding models and is deployable via Ollama on 
+  capable hardware.
 - A local stack pushes more operational burden onto the project: provisioning
   hardware, managing GPU or CPU limits, tuning performance, handling
   observability, and maintaining the full inference environment.
@@ -172,20 +176,13 @@ To https://github.com/rrbarrero/credit-fraud.git
   tasks, so the tradeoff is not only cost and privacy, but also raw model
   capability.
 - In any case, moving from an internal LLM backend to an external one would be
-  relatively trivial from an architectural perspective, because the main value
-  of the system is in the orchestration, retrieval, repository handling, and
-  review workflow around the model rather than in a provider-specific coupling.
+  relatively trivial from an architectural perspective (even a mix of them), 
+  because the main value of the system is in the orchestration, retrieval, 
+  repository handling, and review workflow around the model rather than in 
+  a provider-specific coupling.
 
 ## Next Step
 
-- The logical next step is no longer just "add a sandbox": the system already
-  proves the basic remediation loop on a real branch. The next meaningful step
-  is to let the agent inspect more than one file in the cloned repository
-  before proposing a fix, instead of limiting the edit to the file pointed to
-  by the finding.
-- After that, the next validation step should be execution and verification:
-  let the agent run targeted commands or tests after applying the patch, so the
-  workflow becomes `review -> fix -> validate -> push`.
 - In a CI-oriented integration, the review result could drive follow-up
   automation with explicit policies. For example, only low/medium findings
   could be auto-remediated, while high-severity findings might require manual
@@ -200,11 +197,14 @@ To https://github.com/rrbarrero/credit-fraud.git
 - That kind of multi-agent workflow would benefit from strong observability, so
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
-- Another idea worth studying would be to synchronize repositories in the
-  background on developers' workstations, so the ingestion process can be
-  partially warmed up in advance by embedding changed files incrementally. This
-  could be an option to evaluate depending on the overall system load and the
-  operational cost profile.
+- Another idea worth exploring would be to synchronize repositories in the 
+  background on developers' workstations, so the ingestion process can be 
+  partially warmed up in advance by embedding changed files incrementally. 
+  This could reduce latency at review time without blocking the main workflow. 
+  One possible deployment model is mounting the repository over an NFS share tunneled 
+  through WireGuard. This approach is only relevant as a mitigation for severe 
+  bottlenecks in the revision step, and would need to be evaluated against 
+  network reliability constraints and overall operational cost.
 
 ## Steps to reproduce
 
