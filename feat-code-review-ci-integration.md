@@ -135,6 +135,9 @@ To https://github.com/rrbarrero/credit-fraud.git
 - For repeated vectorization and retrieval over the same repositories, the
   marginal cost is usually lower than calling an external API for each
   embedding or review-related interaction.
+- From a strategic cost perspective, a local setup is also attractive if the
+  market trend continues toward materially more expensive LLM usage over the
+  medium to long term.
 - Data locality is also better: the retrieval pipeline can operate near the
   source snapshots, chunk store, and vector index without depending on
   round-trips to external hosted services.

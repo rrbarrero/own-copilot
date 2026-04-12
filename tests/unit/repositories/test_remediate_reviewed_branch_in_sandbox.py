@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -126,15 +127,21 @@ async def test_execute_remediates_dependency_and_returns_logs(monkeypatch, tmp_p
     )
     llm = AsyncMock()
     llm.ainvoke.return_value = _FakeResponse(
-        """
-        {
-          "path": "pyproject.toml",
-          "updated_content": "[project]\\ndependencies = [\\n    "
-          "\\"fastapi>=0.1\\",\\n]\\n",
-          "commit_message": "Remove unused dependency from project config",
-          "rationale": "The unused dependency is removed with no unrelated changes."
-        }
-        """
+        json.dumps(
+            {
+                "path": "pyproject.toml",
+                "updated_content": (
+                    "[project]\n"
+                    "dependencies = [\n"
+                    '    "fastapi>=0.1",\n'
+                    "]\n"
+                ),
+                "commit_message": "Remove unused dependency from project config",
+                "rationale": (
+                    "The unused dependency is removed with no unrelated changes."
+                ),
+            }
+        )
     )
     runner = _FakeRunner(workspace=tmp_path / "sandbox", run_calls=[])
 
