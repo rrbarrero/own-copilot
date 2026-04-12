@@ -201,10 +201,13 @@ To https://github.com/rrbarrero/credit-fraud.git
   background on developers' workstations, so the **ingestion process can be 
   partially warmed up in advance by embedding changed files incrementally**. 
   This could reduce latency at review time without blocking the main workflow. 
-  One possible deployment model is mounting the repository over an NFS share tunneled 
-  through WireGuard. This approach is only relevant as a mitigation for severe 
-  bottlenecks in the revision step, and would need to be evaluated against 
-  network reliability constraints and overall operational cost.
+  Two possible deployment models are worth considering: mounting the repository 
+  over an NFS share tunneled through WireGuard, or using a peer-to-peer sync 
+  tool such as Syncthing, which would keep a local copy of the repository on 
+  each workstation and avoid network latency altogether during the embedding 
+  process. Both approaches are only relevant as a mitigation for severe bottlenecks 
+  in the revision step, and would need to be evaluated against operational 
+  complexity and overall cost.
 
 ## Steps to reproduce
 
