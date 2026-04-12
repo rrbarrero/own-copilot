@@ -198,8 +198,8 @@ To https://github.com/rrbarrero/credit-fraud.git
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
 - Another idea worth exploring would be to synchronize repositories in the 
-  background on developers' workstations, so the ingestion process can be 
-  partially warmed up in advance by embedding changed files incrementally. 
+  background on developers' workstations, so the **ingestion process can be 
+  partially warmed up in advance by embedding changed files incrementally**. 
   This could reduce latency at review time without blocking the main workflow. 
   One possible deployment model is mounting the repository over an NFS share tunneled 
   through WireGuard. This approach is only relevant as a mitigation for severe 
