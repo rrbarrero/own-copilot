@@ -131,10 +131,7 @@ async def test_execute_remediates_dependency_and_returns_logs(monkeypatch, tmp_p
             {
                 "path": "pyproject.toml",
                 "updated_content": (
-                    "[project]\n"
-                    "dependencies = [\n"
-                    '    "fastapi>=0.1",\n'
-                    "]\n"
+                    '[project]\ndependencies = [\n    "fastapi>=0.1",\n]\n'
                 ),
                 "commit_message": "Remove unused dependency from project config",
                 "rationale": (
