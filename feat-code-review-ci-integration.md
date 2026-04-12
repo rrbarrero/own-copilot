@@ -2,8 +2,8 @@
 
 This feature allows the system to review a repository branch against `main`
 after synchronizing both branches, computing the diff between their snapshots,
-and generating structured findings with severity, affected file, and line
-range. The current implementation now also includes a first remediation flow:
+and generating structured findings with **severity**, **affected file**, and **line
+range**. The current implementation now also includes a **first remediation flow**:
 after the review, the LLM can clone the target branch, apply a fix, commit it,
 and push it back to the remote branch while keeping the full execution trace in
 stdout. In a CI-oriented workflow, the same capability can later be extended
