@@ -81,9 +81,7 @@ class SyncRepositoryJobHandler(JobHandlerProto):
             branch_docs = await self._document_repo.list_by_repository_and_branch(
                 repo.id, resolved_branch
             )
-            branch_docs_by_source = {
-                doc.source_id: doc for doc in branch_docs
-            }
+            branch_docs_by_source = {doc.source_id: doc for doc in branch_docs}
 
             for scanned_file in scanned_files:
                 # 4. Find existing document

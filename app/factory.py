@@ -37,11 +37,11 @@ from app.ingestion.infra.in_filesystem_storage_repo import InFilesystemStorageRe
 from app.ingestion.infra.postgres_chunk_repo import PostgresChunkRepo
 from app.ingestion.infra.postgres_document_repo import PostgresDocumentRepo
 from app.ingestion.infra.postgres_job_repo import PostgresJobRepo
-from app.repositories.application.request_repository_sync import (
-    RequestRepositorySync,
-)
 from app.repositories.application.remediate_reviewed_branch_in_sandbox import (
     RemediateReviewedBranchInSandbox,
+)
+from app.repositories.application.request_repository_sync import (
+    RequestRepositorySync,
 )
 from app.repositories.application.resolve_repository_branch_sync import (
     ResolveRepositoryBranchSync,
@@ -76,8 +76,8 @@ from app.retrieval.infra.postgres_vector_retrieval_provider import (
     PostgresVectorRetrievalProvider,
 )
 from app.retrieval.infra.rrf_rank_fuser import RRFRankFuser
-from app.tools.application.find_files import FindFiles
 from app.tools.application.diff_between_syncs import DiffBetweenSyncs
+from app.tools.application.find_files import FindFiles
 from app.tools.application.read_file import ReadFile
 from app.tools.application.repository_tool_service import RepositoryToolService
 from app.tools.application.search_in_repo import SearchInRepo

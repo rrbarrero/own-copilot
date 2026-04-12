@@ -71,9 +71,7 @@ class ReviewRepositoryBranchAgainstMain:
                 branch=normalized_branch,
                 base_sync_id=base_sync.id,
                 head_sync_id=head_sync.id,
-                summary=(
-                    "No changes detected between main and the requested branch."
-                ),
+                summary=("No changes detected between main and the requested branch."),
                 findings=[],
             )
 

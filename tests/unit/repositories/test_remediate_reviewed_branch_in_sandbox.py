@@ -26,6 +26,7 @@ class _FakeRunner:
     written_content: str | None = None
 
     def create_workspace(self, repository_slug: str, branch: str) -> Path:
+        del repository_slug, branch
         self.workspace.mkdir(parents=True, exist_ok=True)
         return self.workspace
 
@@ -38,6 +39,7 @@ class _FakeRunner:
         env=None,
         display_args: list[str] | None = None,
     ) -> SandboxLogEntry:
+        del env
         self.run_calls.append((step, args, str(cwd) if cwd else None))
         stdout = "ok"
         if step == "git_diff":
@@ -56,7 +58,13 @@ class _FakeRunner:
 
     def read_text(self, *, step: str, path: Path) -> tuple[str, SandboxLogEntry]:
         return (
-            '[project]\ndependencies = [\n    "fastapi>=0.1",\n    "seaborn>=0.13.0",\n]\n',
+            (
+                "[project]\n"
+                "dependencies = [\n"
+                '    "fastapi>=0.1",\n'
+                '    "seaborn>=0.13.0",\n'
+                "]\n"
+            ),
             SandboxLogEntry(
                 step=step,
                 command=f"read_text {path}",
@@ -121,7 +129,8 @@ async def test_execute_remediates_dependency_and_returns_logs(monkeypatch, tmp_p
         """
         {
           "path": "pyproject.toml",
-          "updated_content": "[project]\\ndependencies = [\\n    \\"fastapi>=0.1\\",\\n]\\n",
+          "updated_content": "[project]\\ndependencies = [\\n    "
+          "\\"fastapi>=0.1\\",\\n]\\n",
           "commit_message": "Remove unused dependency from project config",
           "rationale": "The unused dependency is removed with no unrelated changes."
         }
@@ -149,13 +158,16 @@ async def test_execute_remediates_dependency_and_returns_logs(monkeypatch, tmp_p
         llm=llm,
     )
 
-    result = await service.execute(repository_id=repository_id, branch="new-feature-branch")
+    result = await service.execute(
+        repository_id=repository_id,
+        branch="new-feature-branch",
+    )
 
     assert result.commit_sha == "abc123"
     assert result.changed_files == ["pyproject.toml"]
     assert "seaborn" not in (runner.written_content or "")
     assert runner.written_content == (
-        "[project]\ndependencies = [\n    \"fastapi>=0.1\",\n]\n"
+        '[project]\ndependencies = [\n    "fastapi>=0.1",\n]\n'
     )
     assert any(log.step == "git_push" for log in result.logs)
     llm.ainvoke.assert_awaited_once()

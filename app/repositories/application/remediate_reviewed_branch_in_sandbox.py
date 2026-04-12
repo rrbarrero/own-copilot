@@ -21,7 +21,8 @@ class RemediateReviewedBranchInSandbox:
     _SYSTEM_PROMPT = (
         "You are a senior software engineer applying a minimal safe fix for a single "
         "review finding.\n"
-        "You will receive one finding and the full current content of the target file.\n"
+        "You will receive one finding and the full current content of the target "
+        "file.\n"
         "Return ONLY a JSON object with keys: path, updated_content, commit_message, "
         "rationale.\n"
         "Rules:\n"
@@ -64,7 +65,10 @@ class RemediateReviewedBranchInSandbox:
         if finding is None:
             raise ValueError("The review did not produce any finding to remediate.")
 
-        workspace = self._sandbox_runner.create_workspace(repository.name, normalized_branch)
+        workspace = self._sandbox_runner.create_workspace(
+            repository.name,
+            normalized_branch,
+        )
         repo_dir = workspace / "repo"
         logs: list[SandboxLogEntry] = []
 
@@ -113,7 +117,9 @@ class RemediateReviewedBranchInSandbox:
         )
         planned_path = str(remediation_plan.get("path", "")).strip()
         if planned_path != finding.path:
-            raise ValueError("The remediation plan targeted a different file than the finding.")
+            raise ValueError(
+                "The remediation plan targeted a different file than the finding."
+            )
 
         updated_content = str(remediation_plan.get("updated_content", ""))
         if updated_content == original_content:
@@ -207,7 +213,9 @@ class RemediateReviewedBranchInSandbox:
                 "Sandbox remediation is restricted to the configured repository."
             )
         if allowed_branch and branch != allowed_branch:
-            raise ValueError("Sandbox remediation is restricted to the configured branch.")
+            raise ValueError(
+                "Sandbox remediation is restricted to the configured branch."
+            )
 
     def _select_finding(self, findings):
         if not findings:
@@ -234,7 +242,8 @@ class RemediateReviewedBranchInSandbox:
         )
         if log.exit_code != 0:
             raise RuntimeError(
-                f"Sandbox step {step} failed with exit code {log.exit_code}: {log.stderr}"
+                f"Sandbox step {step} failed with exit code "
+                f"{log.exit_code}: {log.stderr}"
             )
         return log
 
@@ -278,7 +287,9 @@ class RemediateReviewedBranchInSandbox:
         try:
             data = json.loads(normalized)
         except json.JSONDecodeError as exc:
-            raise ValueError("The remediation model did not return valid JSON.") from exc
+            raise ValueError(
+                "The remediation model did not return valid JSON."
+            ) from exc
 
         if not isinstance(data, dict):
             raise ValueError("The remediation model did not return an object.")
@@ -287,7 +298,9 @@ class RemediateReviewedBranchInSandbox:
     def _build_authenticated_url(self, clone_url: str) -> str:
         token = settings.SANDBOX_GITHUB_TOKEN.strip()
         if not token:
-            raise ValueError("SANDBOX_GITHUB_TOKEN is required to push remediation commits.")
+            raise ValueError(
+                "SANDBOX_GITHUB_TOKEN is required to push remediation commits."
+            )
         if not clone_url.startswith("https://"):
             raise ValueError("Sandbox remediation only supports HTTPS clone URLs.")
         return clone_url.replace("https://", f"https://x-access-token:{token}@", 1)

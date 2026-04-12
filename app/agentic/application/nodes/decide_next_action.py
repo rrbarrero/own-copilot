@@ -72,7 +72,12 @@ class DecideNextActionNode:
             return {
                 "current_strategy": "review_branch",
                 "tool_calls": state["tool_calls"]
-                + [{"strategy": "review_branch", "parameters": {"branch": review_branch}}],
+                + [
+                    {
+                        "strategy": "review_branch",
+                        "parameters": {"branch": review_branch},
+                    }
+                ],
                 "reasoning_trace": state["reasoning_trace"]
                 + [f"Detected branch review request for {review_branch}."],
                 "step_count": state["step_count"] + 1,

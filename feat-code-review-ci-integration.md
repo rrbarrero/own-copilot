@@ -15,7 +15,7 @@ set of premises and tradeoffs described later in this document.
 ```
 uv run python scripts/api_client.py review-branch \
   e2196e4e-fc51-46ec-aeff-f56cc36e08cd \
-  new-feature-branch
+  new-model-llm-evaluation
 ```
 
 ## Example response
@@ -26,7 +26,7 @@ This is a real and functional response produced by the current implementation.
 {
   "repository_id": "e2196e4e-fc51-46ec-aeff-f56cc36e08cd",
   "base_branch": "main",
-  "branch": "new-feature-branch",
+  "branch": "new-model-llm-evaluation",
   "base_sync_id": "bf2525fe-afbb-4bcd-aa75-61c0b0b75fea",
   "head_sync_id": "f09c868e-09fd-4405-88e3-c3efea430295",
   "summary": "The diff introduces a new RandomForestModel and updates dependencies. The main change is adding seaborn as a dependency, which is not used in the new model code. Other changes are correct additions and modifications.",
@@ -42,7 +42,7 @@ This is a real and functional response produced by the current implementation.
   ]
 }
 
-time uv run python scripts/api_client.py review-branch  new-feature-branch  0,24s user 0,06s system 2% cpu 14,437 total
+time uv run python scripts/api_client.py review-branch  new-model-llm-evaluation  0,24s user 0,06s system 2% cpu 14,437 total
 ```
 
 ## Run the remediation flow

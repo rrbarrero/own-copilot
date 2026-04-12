@@ -1,5 +1,6 @@
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping, Protocol
+from typing import Protocol
 
 from app.repositories.domain.remediation import SandboxLogEntry
 

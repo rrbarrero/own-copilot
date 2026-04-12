@@ -8,10 +8,10 @@ from app.factory import (
     create_resolve_repository_branch_sync,
     create_review_repository_branch_against_main,
 )
-from app.repositories.application.request_repository_sync import RequestRepositorySync
 from app.repositories.application.remediate_reviewed_branch_in_sandbox import (
     RemediateReviewedBranchInSandbox,
 )
+from app.repositories.application.request_repository_sync import RequestRepositorySync
 from app.repositories.application.resolve_repository_branch_sync import (
     ResolveRepositoryBranchSync,
 )
@@ -19,10 +19,10 @@ from app.repositories.application.review_repository_branch_against_main import (
     ReviewRepositoryBranchAgainstMain,
 )
 from app.repositories.infra.dtos import (
-    RepositoryBranchSyncResolveRequestDTO,
-    RepositoryBranchSyncResolveResponseDTO,
     RepositoryBranchRemediationRequestDTO,
     RepositoryBranchRemediationResponseDTO,
+    RepositoryBranchSyncResolveRequestDTO,
+    RepositoryBranchSyncResolveResponseDTO,
     RepositoryReviewFindingDTO,
     RepositoryReviewRequestDTO,
     RepositoryReviewResponseDTO,

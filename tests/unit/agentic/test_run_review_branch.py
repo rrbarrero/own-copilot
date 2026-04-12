@@ -1,8 +1,8 @@
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
-from unittest.mock import AsyncMock
 
 from app.agentic.application.nodes.run_review_branch import RunReviewBranchNode
 from app.schemas.chat import ChatScope, ScopeType
@@ -37,7 +37,12 @@ async def test_run_review_branch_node_formats_findings():
         "scope": ChatScope(type=ScopeType.REPOSITORY, repository_id=uuid4()),
         "history": [],
         "current_strategy": "review_branch",
-        "tool_calls": [{"strategy": "review_branch", "parameters": {"branch": "feature/test"}}],
+        "tool_calls": [
+            {
+                "strategy": "review_branch",
+                "parameters": {"branch": "feature/test"},
+            }
+        ],
         "retrieved_context": None,
         "tool_context": None,
         "citations": [],

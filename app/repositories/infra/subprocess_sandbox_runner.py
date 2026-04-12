@@ -1,6 +1,6 @@
 import subprocess
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
 from uuid import uuid4
 
 from app.repositories.domain.remediation import SandboxLogEntry
@@ -11,8 +11,11 @@ class SubprocessSandboxRunner:
         self._workspace_root = Path(workspace_root)
 
     def create_workspace(self, repository_slug: str, branch: str) -> Path:
-        workspace = self._workspace_root / repository_slug / self._sanitize(branch) / str(
-            uuid4()
+        workspace = (
+            self._workspace_root
+            / repository_slug
+            / self._sanitize(branch)
+            / str(uuid4())
         )
         workspace.mkdir(parents=True, exist_ok=True)
         return workspace

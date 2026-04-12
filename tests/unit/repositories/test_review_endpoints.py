@@ -4,9 +4,11 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from app.api.main import app
-from app.factory import create_remediate_reviewed_branch_in_sandbox
-from app.factory import create_resolve_repository_branch_sync
-from app.factory import create_review_repository_branch_against_main
+from app.factory import (
+    create_remediate_reviewed_branch_in_sandbox,
+    create_resolve_repository_branch_sync,
+    create_review_repository_branch_against_main,
+)
 from app.repositories.domain.remediation import (
     RepositoryBranchRemediation,
     SandboxLogEntry,
@@ -35,8 +37,8 @@ def test_review_repository_endpoint_success():
         ],
     )
 
-    app.dependency_overrides[create_review_repository_branch_against_main] = (
-        lambda: service
+    app.dependency_overrides[create_review_repository_branch_against_main] = lambda: (
+        service
     )
     client = TestClient(app)
 
@@ -108,8 +110,8 @@ def test_remediate_reviewed_branch_endpoint_success():
         ],
     )
 
-    app.dependency_overrides[create_remediate_reviewed_branch_in_sandbox] = (
-        lambda: service
+    app.dependency_overrides[create_remediate_reviewed_branch_in_sandbox] = lambda: (
+        service
     )
     client = TestClient(app)
 

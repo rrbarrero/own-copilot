@@ -1,7 +1,7 @@
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
-from unittest.mock import AsyncMock
 
 from app.agentic.application.nodes.decide_next_action import DecideNextActionNode
 from app.schemas.chat import ChatScope, ScopeType

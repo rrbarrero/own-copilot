@@ -22,10 +22,12 @@ class DockerSandbox:
 
     def run_command(self, command: str, timeout: int = 30) -> str:
         docker_cmd = [
-            "docker", "exec",
+            "docker",
+            "exec",
             self.container_name,
-            "bash", "-lc",
-            f"cd /workspace && {command}"
+            "bash",
+            "-lc",
+            f"cd /workspace && {command}",
         ]
         proc = subprocess.run(
             docker_cmd,
@@ -35,8 +37,4 @@ class DockerSandbox:
         )
         stdout = proc.stdout[-12000:]
         stderr = proc.stderr[-12000:]
-        return (
-            f"exit_code={proc.returncode}\n"
-            f"STDOUT:\n{stdout}\n"
-            f"STDERR:\n{stderr}"
-        )
+        return f"exit_code={proc.returncode}\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"

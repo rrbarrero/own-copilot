@@ -223,7 +223,10 @@ async def test_sync_keeps_branch_documents_isolated(db_url):
             checkouts_root="/tmp/checkouts",
         )
 
-        result = await service.execute("https://github.com/mock/branches", branch="main")
+        result = await service.execute(
+            "https://github.com/mock/branches",
+            branch="main",
+        )
         saved_repo = await repo_repo.get_by_id(result.repository_id)
         saved_job = await job_repo.get_by_id(result.job_id)
         assert saved_repo is not None

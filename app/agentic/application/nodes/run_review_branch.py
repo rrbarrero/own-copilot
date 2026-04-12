@@ -103,7 +103,10 @@ class RunReviewBranchNode:
         for finding in review.findings:
             location = finding.path
             if finding.line_start is not None:
-                if finding.line_end is not None and finding.line_end != finding.line_start:
+                if (
+                    finding.line_end is not None
+                    and finding.line_end != finding.line_start
+                ):
                     location += f":{finding.line_start}-{finding.line_end}"
                 else:
                     location += f":{finding.line_start}"

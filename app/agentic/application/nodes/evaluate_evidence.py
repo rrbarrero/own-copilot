@@ -47,6 +47,7 @@ class EvaluateEvidenceNode:
 
         return {
             "reasoning_trace": reasoning,
-            "done": at_limit or state["current_strategy"] == "answer"
+            "done": at_limit
+            or state["current_strategy"] == "answer"
             or has_prepared_answer,
         }
