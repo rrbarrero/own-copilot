@@ -197,7 +197,7 @@ To https://github.com/rrbarrero/credit-fraud.git
 - That kind of multi-agent workflow would benefit from strong observability, so
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
-- Another idea worth exploring would be to synchronize repositories in the 
+- Another **idea worth exploring** would be to synchronize repositories in the 
   background on developers' workstations, so the **ingestion process can be 
   partially warmed up in advance by embedding changed files incrementally**. 
   This could reduce latency at review time without blocking the main workflow. 
