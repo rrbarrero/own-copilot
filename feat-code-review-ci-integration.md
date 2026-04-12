@@ -1,4 +1,4 @@
-# Feature: Code Review CI Integration
+# Feature: Code Review/Remediation CI Integration
 
 This feature allows the system to review a repository branch against `main`
 after synchronizing both branches, computing the diff between their snapshots,

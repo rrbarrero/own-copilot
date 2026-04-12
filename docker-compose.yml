@@ -65,16 +65,5 @@ services:
     depends_on:
       - db
 
-  sandbox:
-    build:
-      context: ./sandbox
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
-    user: "${UID:-1000}:${GID:-1000}"
-    volumes:
-      - ./sandbox/filesystem:/workspace
-    working_dir: /workspace
-
 volumes:
   postgres_data:
