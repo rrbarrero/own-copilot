@@ -40,6 +40,9 @@ from app.ingestion.infra.postgres_job_repo import PostgresJobRepo
 from app.repositories.application.request_repository_sync import (
     RequestRepositorySync,
 )
+from app.repositories.application.remediate_reviewed_branch_in_sandbox import (
+    RemediateReviewedBranchInSandbox,
+)
 from app.repositories.application.resolve_repository_branch_sync import (
     ResolveRepositoryBranchSync,
 )
@@ -59,6 +62,7 @@ from app.repositories.infra.postgres_repository_sync_repo import (
 from app.repositories.infra.repository_url_normalizer import (
     RepositoryUrlNormalizer,
 )
+from app.repositories.infra.subprocess_sandbox_runner import SubprocessSandboxRunner
 from app.retrieval.application.chat_with_citations import ChatWithCitations
 from app.retrieval.application.retriever import Retriever
 from app.retrieval.infra.hybrid_retrieval_service import HybridRetrievalService
@@ -140,6 +144,23 @@ def create_review_repository_branch_against_main():
     return ReviewRepositoryBranchAgainstMain(
         sync_repo=create_repository_sync_repo(),
         diff_service=create_diff_between_syncs(),
+        llm=create_llm(),
+    )
+
+
+@lru_cache
+def create_sandbox_runner():
+    return SubprocessSandboxRunner(
+        workspace_root=settings.SANDBOX_WORKSPACE_ROOT,
+    )
+
+
+@lru_cache
+def create_remediate_reviewed_branch_in_sandbox():
+    return RemediateReviewedBranchInSandbox(
+        repository_repo=create_repository_repo(),
+        review_service=create_review_repository_branch_against_main(),
+        sandbox_runner=create_sandbox_runner(),
         llm=create_llm(),
     )
 

@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     )
     STORAGE_PATH: str = "/app/storage"
     CONVERSATION_HISTORY_LIMIT: int = 8
+    SANDBOX_WORKSPACE_ROOT: str = "/app/storage/sandbox-runs"
+    SANDBOX_ALLOWED_REPOSITORY_URL: str = ""
+    SANDBOX_ALLOWED_BRANCH: str = ""
+    SANDBOX_GIT_USER_NAME: str = "Own Copilot Bot"
+    SANDBOX_GIT_USER_EMAIL: str = "own-copilot@example.com"
+    SANDBOX_GITHUB_TOKEN: str = ""
 
     model_config = SettingsConfigDict(env_file=".env")
 

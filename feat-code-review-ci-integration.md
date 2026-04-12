@@ -3,11 +3,13 @@
 This feature allows the system to review a repository branch against `main`
 after synchronizing both branches, computing the diff between their snapshots,
 and generating structured findings with severity, affected file, and line
-range. In a CI-oriented workflow, the same capability can be used as an
-automated review step before merge, and later extended with sandboxed
-execution, remediation agents, and validation stages. The current approach is
-based on a **PRIVACY FIRST self-hosted LLM**, following the set of premises and tradeoffs
-described later in this document.
+range. The current implementation now also includes a first remediation flow:
+after the review, the LLM can clone the target branch, apply a fix, commit it,
+and push it back to the remote branch while keeping the full execution trace in
+stdout. In a CI-oriented workflow, the same capability can later be extended
+with stronger sandboxing, remediation agents, and validation stages. The
+current approach is based on a **PRIVACY FIRST self-hosted LLM**, following the
+set of premises and tradeoffs described later in this document.
 
 ## Run the branch review using the repository ID and the target branch name.
 ```
@@ -43,6 +45,65 @@ This is a real and functional response produced by the current implementation.
 time uv run python scripts/api_client.py review-branch  new-feature-branch  0,24s user 0,06s system 2% cpu 14,437 total
 ```
 
+## Run the remediation flow
+
+Once the review has identified a finding, the current POC can ask the LLM to
+apply a fix directly on the reviewed branch:
+
+```bash
+uv run python scripts/api_client.py remediate-reviewed-branch \
+  e2196e4e-fc51-46ec-aeff-f56cc36e08cd \
+  new-model-llm-evaluation
+```
+
+## Example remediation response
+
+This is a real response produced by the current implementation.
+
+```json
+{
+  "repository_id": "e2196e4e-fc51-46ec-aeff-f56cc36e08cd",
+  "branch": "new-model-llm-evaluation",
+  "review_summary": "The diff introduces a new RandomForestModel and updates dependencies. The main issues are an unnecessary seaborn dependency and potential type checking issues.",
+  "remediated_finding_title": "Unnecessary Dependency",
+  "commit_sha": "00135df7dacfc3afbcb5a3b593681337c7e664c0",
+  "changed_files": [
+    "pyproject.toml"
+  ]
+}
+```
+
+## Evidence
+
+- Review remediation commit: `00135df7dacfc3afbcb5a3b593681337c7e664c0`
+- The execution trace recorded by the API confirms the following steps:
+  `git clone`, `git config`, file read, file write, `git diff`, `git status`,
+  `git add`, `git commit`, `git push`, `git rev-parse`.
+
+> [!IMPORTANT]
+> Review the exact remediation diff in GitHub:
+> [Open commit `00135df`](https://github.com/rrbarrero/credit-fraud/pull/1/changes/00135df7dacfc3afbcb5a3b593681337c7e664c0)
+
+Relevant trace excerpts from the real run:
+
+```text
+git clone --branch new-model-llm-evaluation --single-branch https://github.com/rrbarrero/credit-fraud.git /app/storage/sandbox-runs/credit-fraud/new-model-llm-evaluation/3d1ba1cb-7da0-44f6-b7d3-ed96158d677a/repo
+
+git diff -- pyproject.toml
+@@ -14,11 +14,10 @@ dependencies = [
+     "pydantic-settings>=2.9.1",
+     "xgboost>=3.0.2",
+     "lightgbm>=4.4.0",
+-    "seaborn>=0.13.2",
+ ]
+
+git commit -m Remove unused seaborn dependency to reduce package size and attack surface
+
+git push origin new-model-llm-evaluation
+To https://github.com/rrbarrero/credit-fraud.git
+   e19c52c..00135df  new-model-llm-evaluation -> new-model-llm-evaluation
+```
+
 ## Notes
 
 - This branch review flow is implemented as a study case to validate the
@@ -59,6 +120,10 @@ time uv run python scripts/api_client.py review-branch  new-feature-branch  0,24
 - In other words, this feature was integrated pragmatically into the current
   system rather than introduced through a dedicated architecture designed for it
   from the beginning.
+- The remediation step is intentionally still narrow in operational scope: it
+  is meant to validate the end-to-end loop `review -> fix -> commit -> push`
+  before introducing broader repository actions, test execution, or richer
+  multi-file planning.
 
 ## Tradeoffs
 
@@ -107,13 +172,25 @@ time uv run python scripts/api_client.py review-branch  new-feature-branch  0,24
 
 ## Next Step
 
-- The logical next step would be to add an execution sandbox so the model can
-  go beyond static review: generate new code, run the project, validate corner
-  cases, execute targeted checks, and test behavioral hypotheses safely.
-- In a CI-oriented integration, the review result could also drive follow-up
-  automation. For example, depending on the severity of a finding, another
-  agent could be responsible for attempting a fix, validating it, and pushing
-  a new update back to the branch.
+- The logical next step is no longer just "add a sandbox": the system already
+  proves the basic remediation loop on a real branch. The next meaningful step
+  is to let the agent inspect more than one file in the cloned repository
+  before proposing a fix, instead of limiting the edit to the file pointed to
+  by the finding.
+- After that, the next validation step should be execution and verification:
+  let the agent run targeted commands or tests after applying the patch, so the
+  workflow becomes `review -> fix -> validate -> push`.
+- In a CI-oriented integration, the review result could drive follow-up
+  automation with explicit policies. For example, only low/medium findings
+  could be auto-remediated, while high-severity findings might require manual
+  approval before push.
+- Even in that model, automatic remediation should be applied conservatively.
+  A reasonable policy would be to allow this flow only for `severity: low`
+  findings, and only after several controls have passed, such as deterministic
+  diff inspection, scoped file access, and targeted validation commands.
+- A stronger production-ready variant would also include a human-in-the-loop
+  checkpoint before the final push, especially when the agent proposes a code
+  change that is not a trivial configuration cleanup.
 - That kind of multi-agent workflow would benefit from strong observability, so
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
@@ -153,6 +230,9 @@ LLM_TEMPERATURE=0.0
 RAPTOR_ENABLED=true
 RAPTOR_MAX_UNITS_PER_DOCUMENT=2
 RAPTOR_MAX_UNIT_CHARS=1500
+SANDBOX_GITHUB_TOKEN=<token-with-push-permissions>
+SANDBOX_GIT_USER_NAME=Own Copilot Bot
+SANDBOX_GIT_USER_EMAIL=own-copilot@example.com
 ```
 
 If Ollama is not reachable through `host.docker.internal` in your environment,
@@ -187,7 +267,7 @@ uv run python scripts/api_client.py sync-repo https://github.com/rrbarrero/credi
 ```bash
 uv run python scripts/api_client.py sync-repo \
   https://github.com/rrbarrero/credit-fraud.git \
-  --branch new-feature-branch
+  --branch new-model-llm-evaluation
 ```
 
 3. Wait until both sync jobs are completed.
@@ -197,7 +277,15 @@ uv run python scripts/api_client.py sync-repo \
 ```bash
 uv run python scripts/api_client.py review-branch \
   <repository_id> \
-  new-feature-branch
+  new-model-llm-evaluation
+```
+
+5. Run the remediation:
+
+```bash
+uv run python scripts/api_client.py remediate-reviewed-branch \
+  <repository_id> \
+  new-model-llm-evaluation
 ```
 
 ### 6. Validate the implementation

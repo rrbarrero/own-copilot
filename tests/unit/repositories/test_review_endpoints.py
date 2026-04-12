@@ -4,8 +4,13 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from app.api.main import app
+from app.factory import create_remediate_reviewed_branch_in_sandbox
 from app.factory import create_resolve_repository_branch_sync
 from app.factory import create_review_repository_branch_against_main
+from app.repositories.domain.remediation import (
+    RepositoryBranchRemediation,
+    SandboxLogEntry,
+)
 from app.repositories.domain.review import RepositoryBranchReview, ReviewFinding
 
 
@@ -81,3 +86,46 @@ def test_resolve_repository_branch_endpoint_success():
     assert data["branch"] == "feature/review-me"
     assert data["repository_sync_id"] == str(repository_sync_id)
     assert data["commit_sha"] == "abc123"
+
+
+def test_remediate_reviewed_branch_endpoint_success():
+    service = AsyncMock()
+    service.execute.return_value = RepositoryBranchRemediation(
+        repository_id=uuid4(),
+        branch="feature/review-me",
+        review_summary="One review finding.",
+        remediated_finding_title="Unnecessary dependency added",
+        commit_sha="abc123",
+        changed_files=["pyproject.toml"],
+        logs=[
+            SandboxLogEntry(
+                step="git_clone",
+                command="git clone ...",
+                exit_code=0,
+                stdout="cloned",
+                stderr="",
+            )
+        ],
+    )
+
+    app.dependency_overrides[create_remediate_reviewed_branch_in_sandbox] = (
+        lambda: service
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/repositories/remediate-reviewed-branch",
+        json={
+            "repository_id": str(service.execute.return_value.repository_id),
+            "branch": "feature/review-me",
+        },
+    )
+
+    app.dependency_overrides.pop(create_remediate_reviewed_branch_in_sandbox, None)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["branch"] == "feature/review-me"
+    assert data["commit_sha"] == "abc123"
+    assert data["changed_files"] == ["pyproject.toml"]
+    assert data["logs"][0]["step"] == "git_clone"

@@ -48,3 +48,26 @@ class RepositoryBranchSyncResolveResponseDTO(BaseModel):
     branch: str
     repository_sync_id: UUID
     commit_sha: str | None = None
+
+
+class SandboxLogEntryDTO(BaseModel):
+    step: str
+    command: str
+    exit_code: int
+    stdout: str
+    stderr: str
+
+
+class RepositoryBranchRemediationRequestDTO(BaseModel):
+    repository_id: UUID
+    branch: str = Field(..., min_length=1, description="Branch to remediate")
+
+
+class RepositoryBranchRemediationResponseDTO(BaseModel):
+    repository_id: UUID
+    branch: str
+    review_summary: str
+    remediated_finding_title: str
+    commit_sha: str
+    changed_files: list[str]
+    logs: list[SandboxLogEntryDTO]

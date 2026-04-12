@@ -324,5 +324,27 @@ def review_branch(
         typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
 
 
+@app.command()
+def remediate_reviewed_branch(
+    repository_id: Annotated[str, typer.Argument(help="Repository ID")],
+    branch: Annotated[str, typer.Argument(help="Branch to remediate in sandbox")],
+    url: Annotated[str, typer.Option(help="API Base URL")] = "http://localhost:8000",
+):
+    """
+    Run the demo sandbox remediation flow for a reviewed branch.
+    """
+    full_url = f"{url.rstrip('/')}/repositories/remediate-reviewed-branch"
+    payload = {"repository_id": repository_id, "branch": branch}
+
+    try:
+        with httpx.Client(timeout=60.0 * 5) as client:
+            response = client.post(full_url, json=payload)
+            typer.echo(f"Status: {response.status_code}")
+            typer.echo("Response Body:")
+            typer.echo(json.dumps(response.json(), indent=2))
+    except Exception as e:
+        typer.secho(f"An error occurred: {e}", fg=typer.colors.RED)
+
+
 if __name__ == "__main__":
     app()

@@ -3,11 +3,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.factory import (
+    create_remediate_reviewed_branch_in_sandbox,
     create_request_repository_sync,
     create_resolve_repository_branch_sync,
     create_review_repository_branch_against_main,
 )
 from app.repositories.application.request_repository_sync import RequestRepositorySync
+from app.repositories.application.remediate_reviewed_branch_in_sandbox import (
+    RemediateReviewedBranchInSandbox,
+)
 from app.repositories.application.resolve_repository_branch_sync import (
     ResolveRepositoryBranchSync,
 )
@@ -17,6 +21,8 @@ from app.repositories.application.review_repository_branch_against_main import (
 from app.repositories.infra.dtos import (
     RepositoryBranchSyncResolveRequestDTO,
     RepositoryBranchSyncResolveResponseDTO,
+    RepositoryBranchRemediationRequestDTO,
+    RepositoryBranchRemediationResponseDTO,
     RepositoryReviewFindingDTO,
     RepositoryReviewRequestDTO,
     RepositoryReviewResponseDTO,
@@ -69,6 +75,48 @@ async def resolve_branch(
             branch=result.branch,
             repository_sync_id=result.repository_sync_id,
             commit_sha=result.commit_sha,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}") from e
+
+
+@router.post(
+    "/remediate-reviewed-branch",
+    response_model=RepositoryBranchRemediationResponseDTO,
+)
+async def remediate_reviewed_branch(
+    request: RepositoryBranchRemediationRequestDTO,
+    service: Annotated[
+        RemediateReviewedBranchInSandbox,
+        Depends(create_remediate_reviewed_branch_in_sandbox),
+    ],
+) -> RepositoryBranchRemediationResponseDTO:
+    try:
+        result = await service.execute(
+            repository_id=request.repository_id,
+            branch=request.branch,
+        )
+        return RepositoryBranchRemediationResponseDTO(
+            repository_id=result.repository_id,
+            branch=result.branch,
+            review_summary=result.review_summary,
+            remediated_finding_title=result.remediated_finding_title,
+            commit_sha=result.commit_sha,
+            changed_files=result.changed_files,
+            logs=[
+                {
+                    "step": log.step,
+                    "command": log.command,
+                    "exit_code": log.exit_code,
+                    "stdout": log.stdout,
+                    "stderr": log.stderr,
+                }
+                for log in result.logs
+            ],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
