@@ -205,8 +205,8 @@ To https://github.com/rrbarrero/credit-fraud.git
   over an NFS share tunneled through WireGuard, or using a peer-to-peer sync 
   tool such as Syncthing, which would keep a local copy of the repository on 
   each workstation and avoid network latency altogether during the embedding 
-  process. Both approaches are only relevant as a mitigation for severe bottlenecks 
-  in the revision step, and would need to be evaluated against operational 
+  process. Both approaches are **only relevant as a mitigation for severe 
+  bottlenecks** in the revision step, and would need to be evaluated against operational 
   complexity and overall cost.
 
 ## Steps to reproduce
