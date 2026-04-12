@@ -133,27 +133,30 @@ To https://github.com/rrbarrero/credit-fraud.git
   embeddings, indexed chunks, retrieval logic, and repository snapshots close
   to the same execution environment, which reduces integration friction.
 - For repeated vectorization and retrieval over the same repositories, the
-  marginal cost is usually lower than calling an external API for each
+  marginal **cost is usually lower** than calling an external API for each
   embedding or review-related interaction.
 - From a strategic cost perspective, a local setup is also attractive if the
-  market trend continues toward materially more expensive LLM usage over the
+  **market trend continues toward materially more expensive LLM usage** over the
   medium to long term.
 - Data locality is also better: the retrieval pipeline can operate near the
   source snapshots, chunk store, and vector index without depending on
   round-trips to external hosted services.
-- Privacy is a primary constraint here: the current approach deliberately
+- **Privacy** is a primary constraint here: the current approach deliberately
   favors keeping repository contents and review execution close to the local
   environment.
-- Running a local LLM reduces dependency on third-party infrastructure and
-  avoids external API availability issues, provider-side incidents, and the
-  kind of recurring outages that frontier services such as Claude can have.
-- A local setup gives stronger control over model versioning, runtime behavior,
+- Running a **local LLM reduces dependency on third-party infrastructure and
+  avoids external API availability issues**, provider-side incidents, and the
+  kind of recurring **outages** that frontier services such as Claude can have.
+- A local setup gives **stronger control** over model versioning, runtime behavior,
   filesystem integration, and execution flow, which is especially useful for
   repository-centric workflows.
-- Integration with a local sandbox is also more organic and simpler, because
+- **Integration with a local sandbox is also more organic and simpler**, because
   the model, repository snapshots, execution environment, and validation tools
   can live close to each other without crossing third-party boundaries.
-- Once the infrastructure is in place, the marginal cost of repeated reviews,
+- In that same sandboxed model, it would be natural to preinstall the SDKs
+  required by the target stack, for example Android and iOS/iPhone tooling, so
+  the execution environment is closer to the real product context.
+- Once the infrastructure is in place, the **marginal cost of repeated** reviews,
   iterative prompts, and repository-heavy workflows is usually much lower than
   with frontier APIs.
 
