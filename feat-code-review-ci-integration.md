@@ -176,7 +176,7 @@ To https://github.com/rrbarrero/credit-fraud.git
   tasks, so the tradeoff is not only cost and privacy, but also raw model
   capability.
 - In any case, moving from an internal LLM backend to an external one would be
-  relatively trivial from an architectural perspective (even a mix of them), 
+  relatively trivial from an architectural perspective (even a mix of them, for example reflection pattern), 
   because the main value of the system is in the orchestration, retrieval, 
   repository handling, and review workflow around the model rather than in 
   a provider-specific coupling.
