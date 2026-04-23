@@ -194,9 +194,21 @@ To https://github.com/rrbarrero/credit-fraud.git
 - A stronger production-ready variant would also include a human-in-the-loop
   checkpoint before the final push, especially when the agent proposes a code
   change that is not a trivial configuration cleanup.
+- A production-ready implementation would also need proper guardrails around
+  the remediation loop. These should include strict repository and branch
+  allowlists, scoped filesystem access, command allowlists, secret redaction,
+  deterministic diff review before commit, validation gates before push, retry
+  limits, and clear escalation rules for any finding or change outside the
+  approved policy.
 - That kind of multi-agent workflow would benefit from strong observability, so
   the system can expose the progress of every stage: review, remediation,
   validation, retries, and final outcome.
+- In addition to the current chunk-retrieval RAG approach, the system should
+  explore a graph-based retrieval layer. A code graph could represent modules,
+  classes, functions, imports, call relationships, ownership boundaries, and
+  test coverage links, making it easier for the reviewer to reason about impact
+  beyond the local diff and retrieve structurally related evidence that plain
+  chunk retrieval may miss.
 - Another **idea worth exploring** would be to synchronize repositories in the 
   background on developers' workstations, so the **ingestion process can be 
   partially warmed up in advance by embedding changed files incrementally**. 
